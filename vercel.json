@@ -1,5 +1,8 @@
 {
   "buildCommand": "npm run build:demo",
   "outputDirectory": "site",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "headers": [
+    { "source": "/AGENTS.md", "headers": [{ "key": "Content-Type", "value": "text/plain; charset=utf-8" }] }
+  ],
+  "rewrites": [{ "source": "/((?!AGENTS\\.md$).*)", "destination": "/index.html" }]
 }
