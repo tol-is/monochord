@@ -4,7 +4,7 @@
   "description": "A composable, plucked-string navigation rail for React: fisheye ticks, a damped-wave string, scrub to navigate.",
   "license": "MIT",
   "author": "Apostolos Christodoulou <me@tol.is> (https://tol.is)",
-  "homepage": "https://github.com/tol-is/monochord",
+  "homepage": "https://monochord-ui.vercel.app",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tol-is/monochord.git"
