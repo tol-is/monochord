@@ -43,33 +43,39 @@ export function PencilArrow({ from }: { from: RefObject<HTMLElement | null> }) {
       const s = Math.max(0.45, Math.min(1, (w - x0 - 12) / 120));
       // the tip sits just right of the resting rail
       const tx = w < 640 ? 44 : 64;
-      const L = (dx: number, dy: number): Pt => [x0 + dx * s, cy + dy * s];
       let pts: Pt[], d: string;
       if (w >= 640) {
-        // desktop: a loop, then out of it and up, one arc over the title, down to the rail
+        // desktop, built exactly rather than through waypoints: a straight lead-in, a true circle
+        // for the loop, a half circle twice its size turning up and over it, then one long descent
+        // to the rail. Each piece leaves in the direction the next arrives, all of it turns the same
+        // way, and nothing is tighter than the loop itself, so there's no corner or wiggle to see.
         const top = Math.max(24, r.top - 96);
-        pts = [
-          L(0, 4),
-          L(40, 0),
-          L(74, -16),
-          L(84, -42),
-          L(72, -64),
-          L(50, -72),
-          L(28, -64),
-          L(18, -42),
-          L(28, -18),
-          L(50, -6),
-          // out of the loop, a round turn up the right side and over, still turning the same way
-          ...[60, 25, -10, -45, -80].map((deg): Pt => {
-            const t = (deg * Math.PI) / 180;
-            return L(60 + 42 * Math.cos(t), -40 + 42 * Math.sin(t));
-          }),
-          L(40, -90),
-          [(r.left + r.right) / 2, top],
-          [(r.left + tx) / 2, top + (cy - top) * 0.5],
-          [tx, cy + 6],
-        ];
-        d = spline(pts);
+        const f = (n: number) => n.toFixed(1);
+        const R = 30 * s;                                   // loop radius
+        const bx = x0 + 50 * s, by = cy;                    // bottom of the loop: in and out, heading right
+        const tip: Pt = [tx, cy + 6];
+        // the turn: a half circle up the right side, wrapping the loop, to the top heading left
+        const turnR = (by - top) / 2;
+        const k = (4 / 3) * turnR;                         // cubic handles for a half circle
+        const peak: Pt = [bx, top];
+        // then one long descent over the title to the rail. Its controls sit on its two tangent
+        // lines (level through the peak; through the tip at whatever angle meets that level 35% of
+        // the way along), short of where they cross, so it bends one way only
+        const span = peak[0] - tip[0];
+        const cross: Pt = [tip[0] + span * 0.35, top];
+        const c3: Pt = [peak[0] - (peak[0] - cross[0]) * 0.6, top];
+        const c4: Pt = [tip[0] + (cross[0] - tip[0]) * 0.6, tip[1] + (cross[1] - tip[1]) * 0.6];
+        d = [
+          `M ${f(x0)} ${f(cy)}`,
+          `L ${f(bx)} ${f(by)}`,
+          // the loop: up the right side and over, then back down to where it came in
+          `A ${f(R)} ${f(R)} 0 0 0 ${f(bx)} ${f(by - 2 * R)}`,
+          `A ${f(R)} ${f(R)} 0 0 0 ${f(bx)} ${f(by)}`,
+          // out of the loop still heading right: the half-circle turn, then the descent
+          `C ${f(bx + k)} ${f(by)} ${f(bx + k)} ${f(top)} ${f(peak[0])} ${f(peak[1])}`,
+          `C ${f(c3[0])} ${f(c3[1])} ${f(c4[0])} ${f(c4[1])} ${f(tip[0])} ${f(tip[1])}`,
+        ].join(" ");
+        pts = [c4, tip];
       } else {
       // mobile: one rotation throughout, clockwise: out to the right, a full loop, then a wide
       // U-turn that ends heading left behind the content, so the line never doubles back
