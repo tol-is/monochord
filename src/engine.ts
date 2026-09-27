@@ -1,6 +1,7 @@
 // The string: a vertical run of N ticks drawn on a canvas every frame.
 //   · fisheye: near the pointer the ticks spread apart (spring-eased focus + magnification)
-//   · the string is a 1D damped wave: taps, scrubs, value changes and kicks pluck it
+//   · the string vibrates where it's plucked: each pluck is a short span ringing in place in its
+//     first three modes, the higher ones fading first; taps, scrubs, value changes and kicks pluck it
 //   · press + drag scrubs; a tap on the strip jumps to the nearest tick
 // Items are DOM elements the engine positions next to their tick each frame and flags with
 // data-state="open|closed" and data-highlighted, so labels stay real, styleable, focusable nodes.
@@ -14,7 +15,7 @@ export type EngineOptions = {
   magnify?: number;
   /** width of the fisheye, in ticks; default 5.5 */
   spread?: number;
-  /** minimum px between neighbouring ticks before a label may open; default 15 */
+  /** minimum px between neighbouring ticks before a label may open; default the label's font size − 3 */
   labelRoom?: number;
   onSelect: (index: number, source: SelectSource) => void;
   onCross?: (index: number, strength: number) => void;
@@ -22,7 +23,7 @@ export type EngineOptions = {
 
 export type Engine = ReturnType<typeof createEngine>;
 
-const DEFAULTS = { magnify: 7, spread: 5.5, labelRoom: 15 };
+const DEFAULTS = { magnify: 7, spread: 5.5 };
 
 export function createEngine(root: HTMLElement, initial: EngineOptions) {
   let opts = initial;
@@ -33,12 +34,11 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   let W = 0, H = 0, color = "#fff", colorAge = 0;
 
-  // string state: lateral displacement + velocity per tick; layout; label open state
-  let u = new Float32Array(0), v = new Float32Array(0);
+  // layout; label open state
   let ys = new Float32Array(0), mag = new Float32Array(0);
   let open = new Uint8Array(0), hl = new Uint8Array(0);
-  // half of each item's height, measured once it first opens
-  let halfH = new Float32Array(0);
+  // per item: half its height (to centre it on its tick) and its font size (the room it needs)
+  let halfH = new Float32Array(0), fsz = new Float32Array(0);
 
   let px = -1e4, py = -1e4, inside = false;
   let focus = 0, focusV = 0, near = 0, keyFocus = -1;
@@ -46,9 +46,35 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
   let scrub = false, moved = false, downY = 0, downItem = -1, lastHover = -1;
   let t = 0, raf = 0, prev = 0;
 
-  const pluck = (i: number, amt: number, width = 6) => {
-    for (let k = 0; k < N; k++) v[k] += amt * Math.exp(-((k - i) * (k - i)) / (2 * width * width));
+  // plucks: a span of string (centre y, half-width w, px) ringing in place, standing-wave style
+  type Pluck = { y: number; w: number; amp: number; t0: number; f: number };
+  const plucks: Pluck[] = [];
+  const pluck = (i: number, amp: number, w: number) => {
+    if (i < 0 || i >= N) return;
+    if (plucks.length >= 12) plucks.shift();
+    // shorter spans ring faster, as a shorter string would
+    plucks.push({ y: ys[i], w, amp, t0: t, f: 5 + 240 / w });
   };
+  // displacement at y: each span's first three modes, the higher ones quieter and faster to fade
+  const disp = (y: number) => {
+    let d = 0;
+    for (const p of plucks) {
+      const x = (y - p.y + p.w) / (2 * p.w);
+      if (x <= 0 || x >= 1) continue;
+      const a = t - p.t0;
+      for (let n = 1; n <= 3; n++) {
+        // past ~25 Hz a 60 fps frame can't show it: it would only flicker
+        if (p.f * n > 25) break;
+        d += p.amp * [1, 0.3, 0.16][n - 1] * Math.exp(-a * n / 0.35) * Math.sin(n * Math.PI * x) * Math.cos(2 * Math.PI * p.f * n * a);
+      }
+    }
+    return d;
+  };
+  let kickT = -1;
+  const measure = () => items.forEach((el, i) => {
+    halfH[i] = el.offsetHeight / 2;
+    fsz[i] = parseFloat(getComputedStyle(el).fontSize) || 16;
+  });
   // a label's half-height of room at either end
   const top = () => 12, len = () => H - 24;
   const X0 = 1.5;
@@ -65,6 +91,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
 
   const resize = () => {
     W = root.clientWidth; H = root.clientHeight;
+    measure();
     if (!canvas) return;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
   };
@@ -82,7 +109,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     lastHover = i;
     opts.onSelect(i, "scrub");
     opts.onCross?.(i, 1);
-    pluck(i, (Math.random() < 0.5 ? -1 : 1) * 90, 2.5);
+    pluck(i, 6 + Math.random() * 3, 30);
   };
   const onDown = (e: PointerEvent) => {
     const onHit = !!hit && hit.contains(e.target as Node);
@@ -91,7 +118,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     scrub = true; moved = false; downY = e.clientY; downItem = it;
     px = e.clientX; py = e.clientY; inside = true;
     const i = it >= 0 ? it : indexAt(local()[1]);
-    pluck(i, -420, 3);
+    pluck(i, 18, 60);
     lastHover = i;
   };
   const suppressClick = (e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); };
@@ -108,7 +135,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
       opts.onCross?.(i, 1.4);
     }
     // a tap on an item selects through its own click handler (so links and keyboard behave)
-    if (lastHover >= 0) pluck(lastHover, 520, 5);
+    pluck(lastHover, 20, 80);
   };
   const onOut = (e: PointerEvent) => { if (!e.relatedTarget) inside = false; };
   root.addEventListener("pointerdown", onDown);
@@ -127,7 +154,6 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     const [lx, ly] = local();
     const reach = opts.reach ?? (W < 400 ? 60 : 240);
     const A0 = opts.magnify ?? DEFAULTS.magnify, sg = opts.spread ?? DEFAULTS.spread;
-    const room0 = opts.labelRoom ?? DEFAULTS.labelRoom;
     const dx = lx - X0;
     const pointerNear = inside && dx > -40 && dx < reach && ly > top() - 40 && ly < top() + len() + 40;
     const wantNear = pointerNear || scrub || keyFocus >= 0 ? 1 : 0;
@@ -159,15 +185,8 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     const s = len() / Math.max(1, acc);
     for (let i = 0; i < N; i++) ys[i] = top() + ys[i] * s;
 
-    // string: damped wave with fixed ends; the soft limit bows it, never whips it off-screen
-    const sub = 4, h = Math.min(dt, 0.033) / sub;
-    for (let k = 0; k < sub; k++) {
-      for (let i = 0; i < N; i++) {
-        const l = i > 0 ? u[i - 1] : 0, r = i < N - 1 ? u[i + 1] : 0;
-        v[i] += ((l + r - 2 * u[i]) * 2600 - u[i] * 30 - v[i] * 5.5) * h;
-      }
-      for (let i = 0; i < N; i++) { u[i] += v[i] * h; if (Math.abs(u[i]) > 28) { u[i] = Math.sign(u[i]) * 28; v[i] *= -0.3; } }
-    }
+    // rung-out plucks go
+    for (let k = plucks.length - 1; k >= 0; k--) if (t - plucks[k].t0 > 2) plucks.splice(k, 1);
 
     const hovered = near > 0.5 && (pointerNear || scrub) ? indexAt(ly) : near > 0.5 ? keyFocus : -1;
     if (hit) {
@@ -180,15 +199,18 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
       if (hovered !== lastHover && hovered >= 0) { lastHover = hovered; opts.onCross?.(hovered, 0.5); }
     } else if (!scrub && near < 0.2) lastHover = -1;
 
-    const sway = (i: number) => 1.2 * Math.sin(t * 1.3 + i * 0.09) * (1 - near);
-    const X = (i: number) => X0 + u[i] + sway(i);
+    const sway = (y: number) => 1.2 * Math.sin(t * 1.3 + y * 0.02) * (1 - near);
+    // shown displacement: rounds off instead of clipping flat; swings into the edge squash against
+    // it like a string on a fretboard
+    const shown = (d: number) => (d >= 0 ? 26 : 8) * Math.tanh(d / 26);
+    const X = (i: number) => X0 + shown(disp(ys[i])) + sway(ys[i]);
     const tickLen = (i: number) => (i % 10 === 0 ? 9 : 5) + 34 * mag[i] + (i === cur ? 18 : 0);
 
     // items: open when their tick has swollen and has a line of room, or when current at rest
     for (let i = 0; i < N; i++) {
       const el = items[i];
       const room = Math.min(i > 0 ? ys[i] - ys[i - 1] : 99, i < N - 1 ? ys[i + 1] - ys[i] : 99);
-      const show = (mag[i] > 0.32 && room > room0) || (i === cur && near < 0.3);
+      const show = (mag[i] > 0.32 && room > (opts.labelRoom ?? fsz[i] - 3)) || (i === cur && near < 0.3);
       const isH = i === hovered;
       if (show !== !!open[i]) {
         open[i] = show ? 1 : 0;
@@ -197,9 +219,9 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
       }
       if (isH !== !!hl[i]) { hl[i] = isH ? 1 : 0; setAttr(el, "data-highlighted", isH); }
       if (!show) continue;
-      const reveal = i === cur && near < 0.3 ? 1 : Math.min(1, (mag[i] - 0.32) * 2.2) * (isH ? 1 : 0.6);
+      const reveal = i === cur && near < 0.3 ? 1 : Math.min(1, (mag[i] - 0.32) * 2.2) * (isH ? 1 : 0.55);
       // whole pixels: fractional transforms make backed labels bleed at their edges
-      if (!halfH[i]) halfH[i] = el.offsetHeight / 2 || 1;
+      if (!halfH[i]) halfH[i] = el.offsetHeight / 2;
       el.style.transform = `translate3d(${Math.round(X(i) + tickLen(i) + (isH ? 14 : 8))}px,${Math.round(ys[i] - halfH[i])}px,0)`;
       el.style.setProperty("--monochord-reveal", reveal.toFixed(3));
     }
@@ -212,12 +234,12 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     ctx.strokeStyle = ctx.fillStyle = color;
     ctx.lineWidth = 1;
 
-    // the string
-    ctx.globalAlpha = 0.18 + 0.2 * near;
+    // the string itself stays still; only the ticks and labels ride the plucks. Same weight as a
+    // plain tick at rest, as bright as a magnified tick when the rail opens
+    ctx.globalAlpha = Math.min(1, 0.22 + 0.7 * near);
     ctx.beginPath();
-    ctx.moveTo(X(0), ys[0] - 14);
-    for (let i = 0; i < N; i++) ctx.lineTo(X(i), ys[i]);
-    ctx.lineTo(X(N - 1), ys[N - 1] + 14);
+    ctx.moveTo(X0, ys[0] - 14);
+    ctx.lineTo(X0, ys[N - 1] + 14);
     ctx.stroke();
 
     // ticks
@@ -226,15 +248,16 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
       ctx.globalAlpha = i === cur ? 1 : Math.min(1, 0.22 + 0.35 * (i % 10 === 0 ? 1 : 0) * (1 - m) + 0.7 * m);
       ctx.lineWidth = i === cur ? 1.5 : 1;
       ctx.beginPath();
-      ctx.moveTo(X(i), ys[i]);
-      ctx.lineTo(X(i) + tickLen(i), ys[i]);
+      // rooted on the still line; the pluck moves only the far end, so the tick stretches, no gap
+      ctx.moveTo(X0, ys[i]);
+      ctx.lineTo(Math.max(X0 + 1, X(i) + tickLen(i)), ys[i]);
       ctx.stroke();
     }
 
-    // current marker: a diamond riding the string
+    // current marker: a diamond gliding along the still line
     if (cur >= 0) {
       const i0 = Math.max(0, Math.min(N - 2, Math.floor(curF))), f = curF - i0, i1 = Math.min(N - 1, i0 + 1);
-      const my = ys[i0] + (ys[i1] - ys[i0]) * f, mx = X(i0) + (X(i1) - X(i0)) * f;
+      const my = ys[i0] + (ys[i1] - ys[i0]) * f, mx = X0;
       ctx.globalAlpha = 1;
       ctx.beginPath();
       ctx.moveTo(mx, my - 4); ctx.lineTo(mx + 4, my); ctx.lineTo(mx, my + 4); ctx.lineTo(mx - 4, my);
@@ -275,32 +298,39 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     setItems(els: HTMLElement[]) {
       const n = els.length;
       if (n !== N) {
-        const grow = <T extends Float32Array | Uint8Array>(a: T, make: (n: number) => T) => { const b = make(n); b.set(a.subarray(0, Math.min(n, a.length))); return b; };
-        u = grow(u, (k) => new Float32Array(k)); v = grow(v, (k) => new Float32Array(k));
-        ys = grow(ys, (k) => new Float32Array(k)); mag = new Float32Array(n);
+        const grown = new Float32Array(n);
+        grown.set(ys.subarray(0, Math.min(n, ys.length)));
+        ys = grown; mag = new Float32Array(n);
         N = n;
         if (cur >= N) cur = N - 1;
       }
       // new elements start closed; survivors keep their state (no re-reveal on list changes)
-      open = new Uint8Array(n); hl = new Uint8Array(n); halfH = new Float32Array(n);
+      open = new Uint8Array(n); hl = new Uint8Array(n); halfH = new Float32Array(n); fsz = new Float32Array(n);
       els.forEach((el, i) => {
         if (!items.includes(el)) { el.dataset.state = "closed"; el.style.pointerEvents = "none"; el.removeAttribute("data-highlighted"); }
         open[i] = el.dataset.state === "open" ? 1 : 0;
         hl[i] = el.hasAttribute("data-highlighted") ? 1 : 0;
       });
       items = els;
+      measure();
     },
     setCurrent(i: number) {
       if (i === cur) return;
-      if (cur >= 0 && i >= 0) pluck(i, (i > cur ? 1 : -1) * 320, 7);
+      if (cur >= 0 && i >= 0) pluck(i, 12, 70);
       else if (i >= 0) curF = i;
       cur = i;
     },
     /** keyboard focus opens the fisheye around an item; -1 releases it */
     setKeyFocus(i: number) { keyFocus = i; },
-    /** pluck the string at the current tick, e.g. with scroll velocity */
-    kick(velocity: number) { if (N) pluck(Math.max(0, cur), Math.max(-400, Math.min(400, velocity)), 10); },
-    pluck(i: number, amount: number, width?: number) { pluck(i, amount, width); },
+    /** a light pluck at the current tick from scroll velocity (px/frame × ~3), at most every 120 ms */
+    kick(velocity: number) {
+      const vel = Math.max(-400, Math.min(400, velocity));
+      if (cur < 0 || Math.abs(vel) < 20 || t - kickT < 0.12) return;
+      kickT = t;
+      pluck(cur, Math.min(8, Math.abs(vel) / 50), 90);
+    },
+    /** ring a span of string at tick i: amplitude and half-width in px */
+    pluck(i: number, amplitude: number, halfWidth: number) { pluck(i, amplitude, halfWidth); },
     destroy() {
       cancelAnimationFrame(raf);
       ro.disconnect();

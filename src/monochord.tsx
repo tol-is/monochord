@@ -14,7 +14,7 @@ import { createEngine, type Engine, type SelectSource } from "./engine";
 
 export type { SelectSource };
 export type MonochordHandle = {
-  /** pluck the string at the current tick; pass scroll delta × ~3 for a scroll shiver */
+  /** light pluck at the current tick from scroll velocity (delta × ~3); rate-limited to every 120 ms */
   kick(velocity: number): void;
 };
 
@@ -52,7 +52,7 @@ export type RootProps = Omit<useRender.ComponentProps<"nav">, "defaultValue" | "
   magnify?: number;
   /** fisheye width, in ticks; default 5.5 */
   spread?: number;
-  /** px of clearance a label needs from its neighbours to open; default 15 */
+  /** px of clearance a label needs from its neighbours to open; default its font size − 3 */
   labelRoom?: number;
   handle?: React.Ref<MonochordHandle>;
 };

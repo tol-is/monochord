@@ -2,7 +2,8 @@
 
 A navigation rail you can pluck. A vertical index drawn as a single string: bring the pointer to the
 left edge and the ticks spread apart under it, labels resolving as they swell. Press and drag to scrub,
-tap to jump. Scrolling, scrubbing and value changes set the string ringing.
+tap to jump. Each pluck rings a short span of string in place, in its first three modes, so
+taps, scrubs, value changes and scrolling set the ticks vibrating off a still line.
 
 Composable parts built on [Base UI](https://base-ui.com)'s `useRender`, for React 19. Extracted from [Stormy Clouds](https://stormyclouds.com).
 
@@ -47,8 +48,8 @@ position; the string fills it. Arrow keys, Home and End move focus between items
 | `reach` | `number` | px right of the string that opens the fisheye (240, or 60 under 400px wide) |
 | `magnify` | `number` | extra spacing at the focus, in ticks (7) |
 | `spread` | `number` | fisheye width, in ticks (5.5) |
-| `labelRoom` | `number` | px a label needs from its neighbours to open (15) |
-| `handle` | `Ref<{ kick(velocity) }>` | pluck the string, e.g. with scroll delta × 3 |
+| `labelRoom` | `number` | px a label needs from its neighbours to open (its font size − 3) |
+| `handle` | `Ref<{ kick(velocity) }>` | a light pluck at the current tick from scroll velocity (delta × 3), at most every 120 ms |
 
 ### `String`
 
