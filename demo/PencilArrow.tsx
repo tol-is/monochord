@@ -45,33 +45,42 @@ export function PencilArrow({ from }: { from: RefObject<HTMLElement | null> }) {
       const tx = w < 640 ? 44 : 64;
       let pts: Pt[], d: string;
       if (w >= 640) {
-        // desktop, built exactly rather than through waypoints: a straight lead-in, a true circle
-        // for the loop, a turn twice its size that carries it up and away, then one long curve that
+        // desktop, built exactly rather than through waypoints: a straight lead-in at 45°, a true
+        // circle for the loop, a turn twice its size that carries it up and away, then one long curve that
         // crests and comes down into the rail. Each piece leaves in the direction the next arrives, all of it turns the same
         // way, and nothing is tighter than the loop itself, so there's no corner or wiggle to see.
-        const top = Math.max(24, r.top - 96);
         const f = (n: number) => n.toFixed(1);
         const R = 30 * s;                                   // loop radius
-        const bx = x0 + 50 * s, by = cy;                    // bottom of the loop: in and out, heading right
         const tip: Pt = [tx, cy + 6];
-        // the turn: up the right side of a circle twice the loop's size, stopping 150° round while
-        // it's still climbing (heading up and left, 30° above level)
-        const turnR = (by - top) / 2;
-        const ty0 = by - turnR;                             // turn centre y (x is bx)
-        const ex = bx + turnR * Math.cos(-Math.PI / 3), ey = ty0 + turnR * Math.sin(-Math.PI / 3);
+        const q = Math.SQRT1_2;
+        // a circle point at angle θ (screen coords); travelling with θ decreasing turns anticlockwise
+        const on = (c: Pt, rad: number, deg: number): Pt =>
+          [c[0] + rad * Math.cos((deg * Math.PI) / 180), c[1] + rad * Math.sin((deg * Math.PI) / 180)];
+        // the lead-in climbs out of the title at 45° to the loop's lower right (θ = 45°), where the
+        // loop is heading the same way
+        const start: Pt = [x0 + 16 * s, cy + 12 * s];
+        const lead = 44 * s;
+        const e: Pt = [start[0] + lead * q, start[1] - lead * q];
+        const loopC: Pt = [e[0] - R * q, e[1] - R * q];
+        // the turn is a circle twice the loop's size tangent at the same point, so the loop hands
+        // straight over to it. It runs from θ = 45° to −60°, where it's heading up and left, 30° above level
+        const turnR = 2 * R;
+        const turnC: Pt = [e[0] - turnR * q, e[1] - turnR * q];
+        const [ex, ey] = on(turnC, turnR, -60);
         // then one long curve that keeps climbing, crests, and comes down into the rail heading left
         // and down at 28°. Its controls sit on the two tangent lines, so it bends one way only
         const dist = Math.hypot(ex - tip[0], ey - tip[1]);
         const up = 0.38 * dist, down = 0.34 * dist, a28 = (28 * Math.PI) / 180;
         const c3: Pt = [ex - up * Math.cos(Math.PI / 6), Math.max(12, ey - up * Math.sin(Math.PI / 6))];
         const c4: Pt = [tip[0] + down * Math.cos(a28), tip[1] - down * Math.sin(a28)];
+        const opp = on(loopC, R, 45 - 180);
         d = [
-          `M ${f(x0)} ${f(cy)}`,
-          `L ${f(bx)} ${f(by)}`,
-          // the loop: up the right side and over, then back down to where it came in
-          `A ${f(R)} ${f(R)} 0 0 0 ${f(bx)} ${f(by - 2 * R)}`,
-          `A ${f(R)} ${f(R)} 0 0 0 ${f(bx)} ${f(by)}`,
-          // out of the loop still heading right, round and up, then over and down
+          `M ${f(start[0])} ${f(start[1])}`,
+          `L ${f(e[0])} ${f(e[1])}`,
+          // the loop: once round, back to where it came in
+          `A ${f(R)} ${f(R)} 0 0 0 ${f(opp[0])} ${f(opp[1])}`,
+          `A ${f(R)} ${f(R)} 0 0 0 ${f(e[0])} ${f(e[1])}`,
+          // straight on into the bigger turn, then over and down
           `A ${f(turnR)} ${f(turnR)} 0 0 0 ${f(ex)} ${f(ey)}`,
           `C ${f(c3[0])} ${f(c3[1])} ${f(c4[0])} ${f(c4[1])} ${f(tip[0])} ${f(tip[1])}`,
         ].join(" ");
