@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Monochord, createBlip, tickEvent } from "../src";
 import { SOUNDS, type SoundPreset } from "./sounds";
+import { install, usage } from "virtual:code";
 import { FONTS } from "./fonts";
 
 const REPO = "https://github.com/tol-is/monochord";
@@ -88,6 +89,8 @@ function Page({ audio, muted, preset, voices }: { audio: AudioContext | null; mu
             <a href={REPO}>GITHUB ↗</a>
             <a href={NPM}>NPM ↗</a>
           </nav>
+          <div className="code" dangerouslySetInnerHTML={{ __html: install }} />
+          <div className="code" dangerouslySetInnerHTML={{ __html: usage }} />
           <ul className="badges" aria-label="Built with">
             <li>REACT</li>
             <li>BASE UI</li>

@@ -36,12 +36,15 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 /* the page: one centered screen; it scrolls only if the intro is taller than the viewport */
 .intro { position: fixed; inset: 0; overflow-y: auto; display: flex; padding: 72px 88px 64px; text-align: center; }
 .intro-body { max-width: 680px; min-width: 0; margin: auto; }
+.code pre { margin: 0 0 12px; padding: 16px 20px; border: 1px solid var(--line); font-size: 13px; line-height: 1.6; overflow-x: auto; text-align: left; }
+.code:first-of-type pre { padding: 12px 20px; }
+.code code { font-family: var(--mono); }
 .links { display: flex; justify-content: center; gap: 28px; margin: 0 0 28px; font-size: 13px; letter-spacing: 0.16em; }
 .links a { color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
 .links a:hover { border-color: var(--fg); }
 .intro h1 { color: var(--fg); font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: 0.24em; margin: 0 0 20px; padding-left: 0.24em; }
 .intro .lede { color: var(--md); font-size: 16px; margin: 0 0 24px; }
-.badges { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.badges { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; list-style: none; margin: 28px 0 0; padding: 0; }
 .badges li { padding: 3px 10px; border: 1px solid var(--line); color: var(--md); font-size: 11px; letter-spacing: 0.16em; }
 .intro p { margin: 0 0 16px; }
 
