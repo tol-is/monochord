@@ -6,7 +6,7 @@
 // Items are DOM elements the engine positions next to their tick each frame and flags with
 // data-state="open|closed" and data-highlighted, so labels stay real, styleable, focusable nodes.
 
-import type { TickKind } from "./sound";
+import type { TickKind } from "./sound.js";
 
 export type SelectSource = "tap" | "scrub" | "keyboard";
 

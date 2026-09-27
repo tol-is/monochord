@@ -4,6 +4,25 @@
   "description": "A composable, plucked-string navigation rail for React: fisheye ticks, a damped-wave string, scrub to navigate.",
   "license": "MIT",
   "author": "Apostolos Christodoulou <me@tol.is> (https://tol.is)",
+  "homepage": "https://github.com/tol-is/monochord",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tol-is/monochord.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tol-is/monochord/issues"
+  },
+  "keywords": [
+    "react",
+    "navigation",
+    "rail",
+    "index",
+    "fisheye",
+    "scrubber",
+    "base-ui",
+    "canvas",
+    "web-audio"
+  ],
   "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -14,19 +33,26 @@
     }
   },
   "files": [
-    "lib",
-    "src"
+    "lib"
   ],
   "sideEffects": false,
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.lib.json",
+    "build": "rm -rf lib && tsc -p tsconfig.lib.json",
     "build:demo": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "peerDependencies": {
     "react": ">=19",
     "react-dom": ">=19"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.8.0"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
@@ -37,8 +63,5 @@
     "shiki": "^3.23.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.1"
-  },
-  "dependencies": {
-    "@base-ui/react": "^1.8.0"
   }
 }

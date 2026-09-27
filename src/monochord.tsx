@@ -10,8 +10,8 @@
 //   </Monochord.Root>
 import * as React from "react";
 import { useRender } from "@base-ui/react/use-render";
-import { createEngine, type Engine, type SelectSource } from "./engine";
-import { createBlip, tickEvent, type Blip, type BlipOptions, type TickEvent, type TickKind } from "./sound";
+import { createEngine, type Engine, type SelectSource } from "./engine.js";
+import { createBlip, tickEvent, type Blip, type BlipOptions, type TickEvent, type TickKind } from "./sound.js";
 
 export type { SelectSource, TickEvent, TickKind };
 type TickListener = (index: number, event: TickEvent) => void;
