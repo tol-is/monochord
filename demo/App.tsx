@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Monochord, createBlip, tickEvent } from "../src";
 import { SOUNDS, type SoundPreset } from "./sounds";
-import { install, usage } from "virtual:code";
 import { FONTS } from "./fonts";
 
 const REPO = "https://github.com/tol-is/monochord";
@@ -83,19 +82,13 @@ function Page({ audio, muted, preset, voices }: { audio: AudioContext | null; mu
       <main className="intro">
         <div className="intro-body">
           <h1>MONOCHORD</h1>
-          <p className="lede">A vertical index navigation, drawn as a single string you can pluck.</p>
+          <p className="lede">A vertical index navigation.</p>
           {voices}
           <nav className="links" aria-label="Project">
+            <a href="/AGENTS.md">AGENTS ↗</a>
             <a href={REPO}>GITHUB ↗</a>
             <a href={NPM}>NPM ↗</a>
           </nav>
-          <div className="code" dangerouslySetInnerHTML={{ __html: install }} />
-          <div className="code" dangerouslySetInnerHTML={{ __html: usage }} />
-          <ul className="badges" aria-label="Built with">
-            <li>REACT</li>
-            <li>BASE UI</li>
-            <li>MIT</li>
-          </ul>
         </div>
       </main>
     </>

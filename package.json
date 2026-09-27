@@ -33,13 +33,14 @@
     }
   },
   "files": [
-    "lib"
+    "lib",
+    "AGENTS.md"
   ],
   "sideEffects": false,
   "scripts": {
     "dev": "vite",
     "build": "rm -rf lib && tsc -p tsconfig.lib.json",
-    "build:demo": "tsc --noEmit && vite build",
+    "build:demo": "tsc --noEmit && vite build && cp AGENTS.md site/",
     "preview": "vite preview",
     "prepublishOnly": "npm run build"
   },
@@ -60,7 +61,6 @@
     "@vitejs/plugin-react": "^6.1.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "shiki": "^3.23.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.1"
   }
