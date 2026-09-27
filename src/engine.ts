@@ -42,7 +42,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
   // layout; label open state
   let ys = new Float32Array(0), mag = new Float32Array(0);
   let open = new Uint8Array(0), hl = new Uint8Array(0);
-  // per item: how far it has entered, 0–1; it eases in on open and out on close
+  // per item: visibility, 0–1; 1 the moment it opens, fading out after it closes
   let vis = new Float32Array(0);
   const still = matchMedia("(prefers-reduced-motion: reduce)");
   let trackW = "", trackCursor = "";
@@ -218,8 +218,8 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     const tickLen = (i: number) => (i % 10 === 0 ? 9 : 5) + 34 * mag[i] + (i === cur ? 18 : 0);
 
     // items: open when their tick has swollen and has a line of room, or when current at rest.
-    // Entering eases in from a few px left (expo-out-ish); leaving fades faster.
-    const kIn = still.matches ? Infinity : 14, kOut = still.matches ? Infinity : 24;
+    // They appear at once (a Scramble inside is the entrance, as in the original) and fade out.
+    const kOut = still.matches ? Infinity : 24;
     for (let i = 0; i < N; i++) {
       const el = items[i];
       const room = Math.min(i > 0 ? ys[i] - ys[i - 1] : 99, i < N - 1 ? ys[i + 1] - ys[i] : 99);
@@ -232,7 +232,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
       }
       if (isH !== !!hl[i]) { hl[i] = isH ? 1 : 0; setAttr(el, "data-highlighted", isH); }
       const was = vis[i];
-      vis[i] += ((show ? 1 : 0) - vis[i]) * (1 - Math.exp(-dt * (show ? kIn : kOut)));
+      vis[i] = show ? 1 : vis[i] * Math.exp(-dt * kOut);
       if (!show && vis[i] < 0.01) {
         vis[i] = 0;
         if (was > 0) el.style.opacity = "0";
@@ -241,7 +241,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
       const reveal = i === cur && near < 0.3 ? 1 : Math.min(1, Math.max(0, (mag[i] - 0.32) * 2.2)) * (isH ? 1 : 0.55);
       // whole pixels: fractional transforms make backed labels bleed at their edges
       if (!halfH[i]) halfH[i] = el.offsetHeight / 2;
-      const x = X(i) + tickLen(i) + (isH ? 14 : 8) - 6 * (1 - vis[i]);
+      const x = X(i) + tickLen(i) + (isH ? 14 : 8);
       el.style.transform = `translate3d(${Math.round(x)}px,${Math.round(ys[i] - halfH[i])}px,0)`;
       el.style.opacity = vis[i].toFixed(3);
       // nearer the focus stacks higher, so squeezed labels at the fisheye's edge tuck under
