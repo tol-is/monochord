@@ -1,7 +1,7 @@
 import { useLayoutEffect, useState, type RefObject } from "react";
 
-// A pencil arrow in the page background: out of the right of the title, one full loop, then back
-// under the title and left to the rail. The route is a handful of waypoints placed from the
+// A pencil arrow in the page background: out of the right of the title, one full loop, then to
+// the rail on the left: over the title on desktop, under everything on mobile. The route is a handful of waypoints placed from the
 // title's box, joined by one Catmull-Rom spline, so the curve stays smooth at any size and a
 // resize simply redraws it. The loop shrinks when there's little room right of the title.
 
@@ -37,11 +37,9 @@ export function PencilArrow({ from }: { from: RefObject<HTMLElement | null> }) {
       const x0 = r.right + 12, cy = r.top + r.height * 0.5;
       const s = Math.max(0.45, Math.min(1, (w - x0 - 12) / 120));
       const L = (dx: number, dy: number): Pt => [x0 + dx * s, cy + dy * s];
-      // under the title, in the gap before the description
-      const u = r.bottom + 20;
       // the tip sits just right of the resting rail
       const tx = w < 640 ? 44 : 64;
-      const pts: Pt[] = [
+      const loop: Pt[] = [
         L(0, 4),
         L(40, 0),
         // the loop: up the right, over the top, down the left and back across its own stroke
@@ -53,13 +51,35 @@ export function PencilArrow({ from }: { from: RefObject<HTMLElement | null> }) {
         L(18, -42),
         L(28, -18),
         L(50, -6),
-        // swing out and down, then back left under the title
-        L(84, 20),
-        [x0 + 20 * s, u],
-        [(r.left + r.right) / 2, u + 6],
-        [Math.max(tx + 50, r.left - 40), u + 2],
-        [tx, u - 2],
       ];
+      let pts: Pt[];
+      if (w >= 640) {
+        // desktop: out of the loop and up, one arc over the title, down to the rail at title height
+        const top = Math.max(24, r.top - 96);
+        pts = [
+          ...loop,
+          L(92, -24),
+          [x0 + 70 * s, top + 28],
+          [(r.left + r.right) / 2, top],
+          // one long easing descent into the rail
+          [(r.left + tx) / 2, top + (cy - top) * 0.5],
+          [tx, cy + 6],
+        ];
+      } else {
+        // mobile: down the right side, then one level run under everything to the rail
+        const body = el.closest(".intro-body") ?? el;
+        const y = body.getBoundingClientRect().bottom + 36;
+        const edge = Math.min(w - 16, x0 + 96 * s);
+        pts = [
+          ...loop,
+          [edge, cy + 24],
+          [edge, y - 44],
+          // an even corner, then one straight run
+          [edge - 44, y],
+          [tx + 44, y],
+          [tx, y],
+        ];
+      }
       const d = spline(pts);
       // arrowhead: two strokes back along the last stretch
       const [px, py] = pts[pts.length - 2], [ex, ey] = pts[pts.length - 1];
