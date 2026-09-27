@@ -1,0 +1,64 @@
+:root {
+  --bg: #000;
+  --fg: oklch(0.93 0 0);
+  --md: oklch(0.6 0 0);
+  --lo: oklch(0.38 0 0);
+  --line: oklch(0.3 0 0);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--md); overflow: hidden; }
+body { font-family: "Geist Mono", ui-monospace, monospace; font-size: 15px; line-height: 1.55; letter-spacing: 0.02em; }
+a { color: inherit; }
+button { font: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+
+/* the rail: a fixed strip on the left edge; the string is drawn in `color` */
+.rail { position: fixed; top: 0; left: 0; width: 420px; max-width: 100vw; height: 100dvh; z-index: 3; color: var(--fg); }
+.item { font-size: 13px; letter-spacing: 0.06em; cursor: pointer; }
+.label { display: inline-flex; gap: 10px; padding: 1px 7px; background: var(--bg); }
+/* the backing stays near-opaque so labels read over content; only the text fades */
+.item[data-state="open"] { opacity: clamp(0, calc(var(--monochord-reveal, 1) * 3), 1); }
+.label { color: color-mix(in oklch, var(--fg) calc(var(--monochord-reveal, 1) * 100%), var(--bg)); }
+.label .num { color: var(--lo); }
+.item[data-highlighted] .num, .item[data-active] .num { color: var(--md); }
+
+/* chrome */
+.bar { position: fixed; top: 20px; right: 28px; left: 88px; z-index: 2; display: flex; justify-content: flex-end; align-items: center; gap: 28px; font-size: 12px; letter-spacing: 0.12em; }
+.sets { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.sets button { padding: 5px 10px; border: 1px solid transparent; color: var(--lo); }
+.sets button span { color: var(--line); margin-left: 4px; }
+.sets button:hover { color: var(--fg); }
+.sets button[aria-pressed="true"] { color: var(--fg); border-color: var(--line); }
+.sets button[aria-pressed="true"] span { color: var(--md); }
+.sound { color: var(--lo); white-space: nowrap; }
+.sound:hover, .sound[aria-pressed="true"] { color: var(--fg); }
+.mark { position: fixed; right: 28px; bottom: 24px; z-index: 2; color: var(--fg); text-decoration: none; font-size: 13px; letter-spacing: 0.2em; }
+:focus-visible { outline: 1px solid var(--fg); outline-offset: 2px; }
+
+/* gallery */
+.gallery { position: fixed; inset: 0; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; }
+.gallery::-webkit-scrollbar { display: none; }
+section { height: 100dvh; scroll-snap-align: start; }
+.intro { display: flex; align-items: center; height: auto; min-height: 100dvh; padding: 96px 28px 64px 88px; }
+.intro-body { max-width: 680px; min-width: 0; }
+.intro h1 { color: var(--fg); font-weight: 400; font-size: 40px; line-height: 1.1; letter-spacing: -0.01em; margin: 0 0 28px; }
+.intro p { margin: 0 0 16px; }
+.intro code { color: var(--fg); }
+.intro pre { margin: 24px 0; padding: 18px 20px; border: 1px solid var(--line); font-size: 13px; line-height: 1.6; overflow-x: auto; }
+.intro .meta { color: var(--lo); font-size: 13px; }
+.intro .meta a { text-decoration: none; color: var(--md); }
+.intro .meta a:hover { color: var(--fg); }
+.intro .hint { color: var(--lo); font-size: 12px; letter-spacing: 0.16em; margin-top: 32px; }
+.plate { display: flex; flex-direction: column; justify-content: center; padding: 0 28px 0 88px; }
+.plate-num { color: var(--lo); font-size: 14px; letter-spacing: 0.2em; margin-bottom: 12px; }
+.plate h2 { color: var(--fg); font-weight: 400; font-size: clamp(36px, 8vw, 112px); line-height: 1; letter-spacing: -0.02em; margin: 0; overflow-wrap: anywhere; }
+.plate-meta { color: var(--lo); font-size: 12px; letter-spacing: 0.16em; margin-top: 24px; }
+
+@media (max-width: 640px) {
+  .rail { --monochord-track-width: 40px; }
+  .bar { top: 12px; right: 16px; left: 52px; gap: 12px; }
+  .mark { right: 16px; bottom: 16px; }
+  .intro { padding: 120px 16px 48px 52px; }
+  .intro h1 { font-size: 30px; }
+  .plate { padding: 0 16px 0 52px; }
+}

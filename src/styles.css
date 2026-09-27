@@ -1,0 +1,41 @@
+/* monochord: structural defaults + Radix-style reveal. Every selector is wrapped in :where()
+   (zero specificity), so any class you add wins. Tune motion with the custom properties. */
+:where([data-monochord-root]) {
+  --monochord-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --monochord-enter: 240ms;
+  --monochord-exit: 140ms;
+  --monochord-track-width: 56px;
+  pointer-events: none;
+}
+:where([data-monochord-string]) {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  display: block; pointer-events: none;
+}
+:where([data-monochord-track]) {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: var(--monochord-track-width);
+  pointer-events: auto; touch-action: none; cursor: ns-resize;
+}
+:where([data-monochord-item]) {
+  position: absolute; top: 0; left: 0;
+  white-space: nowrap; touch-action: none; pointer-events: auto;
+  font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0;
+  opacity: 0; will-change: transform, opacity;
+  transition: opacity var(--monochord-exit) ease-out;
+}
+:where([data-monochord-item][data-state="open"]) {
+  opacity: var(--monochord-reveal, 1);
+  transition: opacity 120ms ease-out;
+}
+/* the child does the entrance so the engine keeps the transform on the item */
+:where([data-monochord-item][data-state="open"] > *) {
+  display: inline-block;
+  animation: monochord-in var(--monochord-enter) var(--monochord-ease);
+}
+:where([data-monochord-item]:focus-visible) { outline: 1px solid currentColor; outline-offset: 3px; }
+@keyframes monochord-in {
+  from { opacity: 0; transform: translateX(-6px) scale(0.96); }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where([data-monochord-item][data-state="open"] > *) { animation-duration: 1ms; }
+}

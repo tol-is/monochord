@@ -1,0 +1,46 @@
+{
+  "name": "monochord",
+  "version": "0.1.0",
+  "description": "A composable, plucked-string navigation rail for React: fisheye ticks, a damped-wave string, scrub to navigate.",
+  "license": "MIT",
+  "author": "Apostolos Christodoulou <me@tol.is> (https://tol.is)",
+  "type": "module",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./styles.css": "./src/styles.css"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.lib.json",
+    "build:demo": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.3.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.1"
+  }
+}
