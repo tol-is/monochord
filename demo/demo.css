@@ -4,7 +4,7 @@
   --md: oklch(0.6 0 0);
   --lo: oklch(0.38 0 0);
   --line: oklch(0.3 0 0);
-  --mono: "Geist Mono", ui-monospace, monospace;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -14,11 +14,9 @@ a { color: inherit; }
 button { font: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 
 /* the rail: a fixed strip on the left edge; the string is drawn in `color` */
-.rail { position: fixed; top: 0; left: 0; width: 420px; max-width: 100vw; height: 100dvh; z-index: 3; color: var(--fg); }
-.item { font-size: 13px; letter-spacing: 0.06em; cursor: pointer; }
+.rail { position: fixed; top: 0; left: 0; width: 420px; max-width: 100vw; height: 100dvh; z-index: 3; color: var(--fg); font-size: 13px; letter-spacing: 0.06em; }
 .label { display: inline-flex; gap: 10px; padding: 1px 7px; background: var(--bg); }
-/* the backing stays near-opaque so labels read over content; only the text fades */
-.item[data-state="open"] { opacity: clamp(0, calc(var(--monochord-reveal, 1) * 3), 1); }
+/* the backing stays opaque so labels read over content; the text fades with --monochord-reveal */
 .label { color: color-mix(in oklch, var(--fg) calc(var(--monochord-reveal, 1) * 100%), var(--bg)); }
 .label .num { color: var(--lo); }
 .item[data-highlighted] .num, .item[data-active] .num { color: var(--md); }
@@ -51,7 +49,6 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .intro p { margin: 0 0 16px; }
 
 @media (max-width: 640px) {
-  .rail { --monochord-track-width: 40px; }
   .speaker { right: 10px; bottom: 10px; }
   .voices { font-size: 10px; letter-spacing: 0.08em; }
   .voices button { padding: 4px 5px; }

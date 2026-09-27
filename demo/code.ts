@@ -2,7 +2,6 @@
 export const INSTALL = `npm i monochord`;
 
 export const USAGE = `import { Monochord } from "monochord";
-import "monochord/styles.css";
 
 <Monochord.Root value={page} onValueChange={setPage}>
   <Monochord.String />

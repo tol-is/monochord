@@ -17,7 +17,6 @@ npm i monochord
 
 ```tsx
 import { Monochord } from "monochord";
-import "monochord/styles.css";
 
 <Monochord.Root className="rail" value={page} onValueChange={(v) => setPage(v)}>
   <Monochord.String />
@@ -49,6 +48,7 @@ position; the string fills it. Arrow keys, Home and End move focus between items
 | `magnify` | `number` | extra spacing at the focus, in ticks (7) |
 | `spread` | `number` | fisheye width, in ticks (5.5) |
 | `labelRoom` | `number` | px a label needs from its neighbours to open (its font size − 3) |
+| `trackWidth` | `number` | px width of the press/scrub strip at rest (56, or 40 under 400px wide) |
 | `handle` | `Ref<{ kick(velocity) }>` | a light pluck at the current tick from scroll velocity (delta × 3), at most every 120 ms |
 
 ### `String`
@@ -60,7 +60,7 @@ Drawn in the element's CSS `color`. `trackProps` go to the strip.
 
 One entry. A `<button>` by default; `render` swaps in your own element, e.g.
 `render={<a href="/page" />}`, or a function `(props, { active }) => …`. The engine sets
-its `transform`; style everything else through:
+its `transform` and `opacity`; style everything else through:
 
 - `data-state="open" | "closed"`: whether its label is revealed
 - `data-highlighted`: nearest the pointer or keyboard focus
@@ -78,9 +78,17 @@ Text that resolves out of random glyphs whenever its item opens. Screen readers 
 
 ## Styling
 
-`monochord/styles.css` holds the structural defaults and an eased reveal, all wrapped in `:where()`
-so your classes always win. Custom properties on `Root`: `--monochord-ease`, `--monochord-enter`,
-`--monochord-exit`, `--monochord-track-width`.
+No stylesheet to import. Each part carries only the inline styles it needs to work (positioning,
+the strip's hit area, a plain button reset), and the engine drives each item's transform, opacity
+and reveal every frame. Everything else is yours:
+
+- Style state through the data attributes: `data-state="open" | "closed"`, `data-highlighted`,
+  `data-active`, plus `--monochord-reveal` (0–1) for emphasis.
+- `Item` takes `className` and `style` as values or, Base UI style, as functions of its state:
+  `className={(s) => (s.active ? "on" : undefined)}`.
+- The string, ticks and marker draw in the `String` canvas's CSS `color`; labels inherit the
+  `Root`'s font and colour.
+- Motion respects `prefers-reduced-motion`.
 
 ## Sound
 

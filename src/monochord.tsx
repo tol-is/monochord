@@ -58,12 +58,14 @@ export type RootProps = Omit<useRender.ComponentProps<"nav">, "defaultValue" | "
   spread?: number;
   /** px of clearance a label needs from its neighbours to open; default its font size − 3 */
   labelRoom?: number;
+  /** px width of the press/scrub strip at rest; default 56 (40 when narrower than 400px) */
+  trackWidth?: number;
   handle?: React.Ref<MonochordHandle>;
 };
 
 function Root({
   value: valueProp, defaultValue, onValueChange, onTickCross,
-  reach, magnify, spread, labelRoom, handle, render, ref, onKeyDown, ...props
+  reach, magnify, spread, labelRoom, trackWidth, handle, render, ref, className, style, onKeyDown, ...props
 }: RootProps) {
   const [inner, setInner] = React.useState(defaultValue);
   const value = valueProp !== undefined ? valueProp : inner;
@@ -90,7 +92,7 @@ function Root({
   }, []);
 
   const options = {
-    reach, magnify, spread, labelRoom,
+    reach, magnify, spread, labelRoom, trackWidth,
     onSelect: (i: number, source: SelectSource) => {
       const v = ordered.current[i]?.dataset.value;
       if (v !== undefined) select(v, source);
@@ -169,10 +171,28 @@ function Root({
     render,
     defaultTagName: "nav",
     ref: [rootRef as React.Ref<HTMLElement>, ref as React.Ref<HTMLElement>],
-    props: { "data-monochord-root": "", ...props, onKeyDown: handleKeyDown },
+    props: { "data-monochord-root": "", ...props, className, style: { ...rootStyle, ...style }, onKeyDown: handleKeyDown },
   });
   return <MonochordContext.Provider value={ctx}>{element}</MonochordContext.Provider>;
 }
+
+/* ─── Inline styles: structure only. Override through className/style (functions of state welcome). */
+
+const rootStyle: React.CSSProperties = { pointerEvents: "none" };
+const canvasStyle: React.CSSProperties = {
+  position: "absolute", inset: 0, width: "100%", height: "100%", display: "block", pointerEvents: "none",
+};
+// the engine sets its width (wider while open) and cursor
+const trackStyle: React.CSSProperties = {
+  position: "absolute", top: 0, bottom: 0, left: 0, pointerEvents: "auto", touchAction: "none",
+};
+// the engine sets transform and opacity every frame; the text fades with --monochord-reveal
+const itemStyle: React.CSSProperties = {
+  position: "absolute", top: 0, left: 0, opacity: 0, willChange: "transform, opacity",
+  whiteSpace: "nowrap", touchAction: "none", cursor: "pointer",
+  font: "inherit", letterSpacing: "inherit", background: "none", border: 0, padding: 0, margin: 0,
+  color: "color-mix(in oklab, currentColor calc(var(--monochord-reveal, 1) * 100%), transparent)",
+};
 
 /* ─── String ─── */
 
@@ -182,7 +202,7 @@ export type StringProps = React.ComponentPropsWithRef<"canvas"> & {
 };
 
 /** The drawn string, ticks and current-marker, plus the press/scrub strip. Colour is `color`. */
-function StringPart({ trackProps, ref, ...props }: StringProps) {
+function StringPart({ trackProps, ref, style, ...props }: StringProps) {
   const ctx = useMonochord("String");
   const canvas = React.useRef<HTMLCanvasElement | null>(null);
   const track = React.useRef<HTMLDivElement | null>(null);
@@ -197,9 +217,10 @@ function StringPart({ trackProps, ref, ...props }: StringProps) {
         data-monochord-string=""
         aria-hidden
         {...props}
+        style={{ ...canvasStyle, ...style }}
         ref={(node) => { canvas.current = node; setRef(ref, node); }}
       />
-      <div data-monochord-track="" aria-hidden {...trackProps} ref={track} />
+      <div data-monochord-track="" aria-hidden {...trackProps} style={{ ...trackStyle, ...trackProps?.style }} ref={track} />
     </>
   );
 }
@@ -207,25 +228,31 @@ function StringPart({ trackProps, ref, ...props }: StringProps) {
 /* ─── Item ─── */
 
 export type ItemState = { active: boolean };
-export type ItemProps = useRender.ComponentProps<"button", ItemState> & { value: string };
+export type ItemProps = Omit<useRender.ComponentProps<"button", ItemState>, "className" | "style"> & {
+  value: string;
+  className?: string | ((state: ItemState) => string | undefined);
+  style?: React.CSSProperties | ((state: ItemState) => React.CSSProperties | undefined);
+};
 
 /**
  * One entry on the string. Carries data-state="open|closed" (label revealed), data-highlighted
  * (nearest the pointer), data-active and aria-current (the current value), and the CSS variable
- * --monochord-reveal (0–1 emphasis). The engine sets its transform; style everything else.
+ * --monochord-reveal (0–1 emphasis; the text fades with it by default). The engine drives its
+ * transform and opacity. `className` and `style` may be functions of { active }.
  * `render` swaps the button for your own element, e.g. render={<a href={url} />}.
  */
-function Item({ value, render, ref, onClick, onFocus, onBlur, ...props }: ItemProps) {
+function Item({ value, render, ref, className, style, onClick, onFocus, onBlur, ...props }: ItemProps) {
   const ctx = useMonochord("Item");
   const node = React.useRef<HTMLElement | null>(null);
   const { register } = ctx;
   React.useLayoutEffect(() => register(node.current!), [register]);
   const active = ctx.value === value;
+  const state: ItemState = { active };
   return useRender({
     render,
     defaultTagName: "button",
     ref: [node, ref as React.Ref<HTMLElement>],
-    state: { active },
+    state,
     props: {
       type: render ? undefined : "button",
       "data-monochord-item": "",
@@ -233,6 +260,8 @@ function Item({ value, render, ref, onClick, onFocus, onBlur, ...props }: ItemPr
       "aria-current": active ? "true" : undefined,
       tabIndex: ctx.tabbable === value ? 0 : -1,
       ...props,
+      className: typeof className === "function" ? className(state) : className,
+      style: { ...itemStyle, ...(typeof style === "function" ? style(state) : style) },
       onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
         onClick?.(e);
         // detail 0: Enter/Space, not a pointer

@@ -19,6 +19,8 @@ export type EngineOptions = {
   spread?: number;
   /** minimum px between neighbouring ticks before a label may open; default the label's font size − 3 */
   labelRoom?: number;
+  /** px width of the press/scrub strip at rest; default 56 (40 under 400px wide) */
+  trackWidth?: number;
   onSelect: (index: number, source: SelectSource) => void;
   /** a tick was crossed or chosen */
   onCross?: (index: number, kind: TickKind) => void;
@@ -40,6 +42,10 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
   // layout; label open state
   let ys = new Float32Array(0), mag = new Float32Array(0);
   let open = new Uint8Array(0), hl = new Uint8Array(0);
+  // per item: how far it has entered, 0–1; it eases in on open and out on close
+  let vis = new Float32Array(0);
+  const still = matchMedia("(prefers-reduced-motion: reduce)");
+  let trackW = "", trackCursor = "";
   // per item: half its height (to centre it on its tick) and its font size (the room it needs)
   let halfH = new Float32Array(0), fsz = new Float32Array(0);
 
@@ -194,8 +200,10 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     const hovered = near > 0.5 && (pointerNear || scrub) ? indexAt(ly) : near > 0.5 ? keyFocus : -1;
     if (hit) {
       // the strip widens while open so the whole fisheye can be scrubbed
-      hit.style.width = near > 0.3 || scrub ? `${Math.min(W, reach + 40)}px` : "";
-      hit.style.cursor = near > 0.5 ? "pointer" : "";
+      const w = `${near > 0.3 || scrub ? Math.min(W, reach + 40) : opts.trackWidth ?? (W < 400 ? 40 : 56)}px`;
+      const c = near > 0.5 ? "pointer" : "ns-resize";
+      if (w !== trackW) hit.style.width = trackW = w;
+      if (c !== trackCursor) hit.style.cursor = trackCursor = c;
     }
     // hover blips as the pointer crosses ticks
     if (near > 0.6 && !scrub && pointerNear) {
@@ -209,7 +217,9 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     const X = (i: number) => X0 + shown(disp(ys[i])) + sway(ys[i]);
     const tickLen = (i: number) => (i % 10 === 0 ? 9 : 5) + 34 * mag[i] + (i === cur ? 18 : 0);
 
-    // items: open when their tick has swollen and has a line of room, or when current at rest
+    // items: open when their tick has swollen and has a line of room, or when current at rest.
+    // Entering eases in from a few px left (expo-out-ish); leaving fades faster.
+    const kIn = still.matches ? Infinity : 14, kOut = still.matches ? Infinity : 24;
     for (let i = 0; i < N; i++) {
       const el = items[i];
       const room = Math.min(i > 0 ? ys[i] - ys[i - 1] : 99, i < N - 1 ? ys[i + 1] - ys[i] : 99);
@@ -221,11 +231,19 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
         el.style.pointerEvents = show ? "" : "none";
       }
       if (isH !== !!hl[i]) { hl[i] = isH ? 1 : 0; setAttr(el, "data-highlighted", isH); }
-      if (!show) continue;
-      const reveal = i === cur && near < 0.3 ? 1 : Math.min(1, (mag[i] - 0.32) * 2.2) * (isH ? 1 : 0.55);
+      const was = vis[i];
+      vis[i] += ((show ? 1 : 0) - vis[i]) * (1 - Math.exp(-dt * (show ? kIn : kOut)));
+      if (!show && vis[i] < 0.01) {
+        vis[i] = 0;
+        if (was > 0) el.style.opacity = "0";
+        continue;
+      }
+      const reveal = i === cur && near < 0.3 ? 1 : Math.min(1, Math.max(0, (mag[i] - 0.32) * 2.2)) * (isH ? 1 : 0.55);
       // whole pixels: fractional transforms make backed labels bleed at their edges
       if (!halfH[i]) halfH[i] = el.offsetHeight / 2;
-      el.style.transform = `translate3d(${Math.round(X(i) + tickLen(i) + (isH ? 14 : 8))}px,${Math.round(ys[i] - halfH[i])}px,0)`;
+      const x = X(i) + tickLen(i) + (isH ? 14 : 8) - 6 * (1 - vis[i]);
+      el.style.transform = `translate3d(${Math.round(x)}px,${Math.round(ys[i] - halfH[i])}px,0)`;
+      el.style.opacity = vis[i].toFixed(3);
       el.style.setProperty("--monochord-reveal", reveal.toFixed(3));
     }
 
@@ -293,6 +311,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     setOptions(next: EngineOptions) { opts = next; },
     attach(c: HTMLCanvasElement | null, h: HTMLElement | null) {
       canvas = c; hit = h;
+      trackW = trackCursor = "";
       ctx = c ? c.getContext("2d") : null;
       colorAge = 0;
       resize();
@@ -308,8 +327,11 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
         if (cur >= N) cur = N - 1;
       }
       // new elements start closed; survivors keep their state (no re-reveal on list changes)
+      const prevVis = new Map(items.map((el, i) => [el, vis[i]]));
       open = new Uint8Array(n); hl = new Uint8Array(n); halfH = new Float32Array(n); fsz = new Float32Array(n);
+      vis = new Float32Array(n);
       els.forEach((el, i) => {
+        vis[i] = prevVis.get(el) ?? 0;
         if (!items.includes(el)) { el.dataset.state = "closed"; el.style.pointerEvents = "none"; el.removeAttribute("data-highlighted"); }
         open[i] = el.dataset.state === "open" ? 1 : 0;
         hl[i] = el.hasAttribute("data-highlighted") ? 1 : 0;

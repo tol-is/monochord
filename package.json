@@ -11,16 +11,13 @@
     ".": {
       "types": "./lib/index.d.ts",
       "import": "./lib/index.js"
-    },
-    "./styles.css": "./src/styles.css"
+    }
   },
   "files": [
     "lib",
     "src"
   ],
-  "sideEffects": [
-    "*.css"
-  ],
+  "sideEffects": false,
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.lib.json",
