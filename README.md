@@ -139,7 +139,7 @@ analytics.
 
 ## Demo
 
-`npm run dev`. Eighty-odd famous typefaces, oldest first, from Jenson (1470) to Söhne (2019).
-Each title is set in its own face when that font is installed locally.
+`npm run dev`. A single page with a rail of a hundred famous typefaces, oldest first, from Jenson (1470)
+to Söhne (2019), and five sound voices to try: Pulse, Fall, Climb, Glass and Click.
 
 MIT © Apostolos Christodoulou

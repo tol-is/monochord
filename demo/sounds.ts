@@ -21,10 +21,9 @@ export const SOUNDS: SoundPreset[] = [
       echo: { time: 0.31, feedback: 0.35, wet: 0.22, cutoff: 2400 },
     },
   },
-  // a dry mechanical click, silent on hover
+  // a dry mechanical click
   {
     id: "click", name: "Click",
     options: { pitch: (i) => (i % 10 === 0 ? 1600 : 2400), wave: "square", voices: [[1, 1]], attack: 0.001, decay: 0.004, volume: 0.025, echo: false },
-    kinds: ["scrub", "tap", "keyboard"],
   },
 ];

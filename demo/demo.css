@@ -36,12 +36,9 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .mark { position: fixed; right: 28px; bottom: 24px; z-index: 2; color: var(--fg); text-decoration: none; font-size: 13px; letter-spacing: 0.2em; }
 :focus-visible { outline: 1px solid var(--fg); outline-offset: 2px; }
 
-/* gallery */
-.gallery { position: fixed; inset: 0; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; }
-.gallery::-webkit-scrollbar { display: none; }
-section { height: 100dvh; scroll-snap-align: start; }
-.intro { display: flex; align-items: center; justify-content: center; height: auto; min-height: 100dvh; padding: 72px 88px 64px; text-align: center; }
-.intro-body { max-width: 680px; min-width: 0; }
+/* the page: one centered screen; it scrolls only if the intro is taller than the viewport */
+.intro { position: fixed; inset: 0; overflow-y: auto; display: flex; padding: 72px 88px 64px; text-align: center; }
+.intro-body { max-width: 680px; min-width: 0; margin: auto; }
 .intro pre { text-align: left; }
 .intro h1 { color: var(--fg); font-weight: 400; font-size: 40px; line-height: 1.1; letter-spacing: -0.01em; margin: 0 0 28px; }
 .intro p { margin: 0 0 16px; }
@@ -51,10 +48,6 @@ section { height: 100dvh; scroll-snap-align: start; }
 .intro .meta a { text-decoration: none; color: var(--md); }
 .intro .meta a:hover { color: var(--fg); }
 .intro .hint { color: var(--lo); font-size: 12px; letter-spacing: 0.16em; margin-top: 32px; }
-.plate { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 88px; }
-.plate-num { color: var(--lo); font-size: 14px; letter-spacing: 0.2em; margin-bottom: 12px; }
-.plate h2 { color: var(--fg); font-weight: 400; font-size: clamp(36px, 8vw, 112px); line-height: 1; letter-spacing: -0.02em; margin: 0; overflow-wrap: anywhere; }
-.plate-meta { color: var(--lo); font-size: 12px; letter-spacing: 0.16em; margin-top: 24px; }
 
 @media (max-width: 640px) {
   .rail { --monochord-track-width: 40px; }
@@ -64,5 +57,4 @@ section { height: 100dvh; scroll-snap-align: start; }
   .mark { right: 16px; bottom: 16px; }
   .intro { padding: 64px 52px 48px; }
   .intro h1 { font-size: 30px; }
-  .plate { padding: 0 52px; }
 }
