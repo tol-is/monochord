@@ -84,7 +84,8 @@ import { blip } from "monochord";
 <Monochord.Root onTickCross={(i, s) => blip(audioCtx, i, s)} />
 ```
 
-A short triangle blip per tick, climbing a minor pentatonic ladder, so a scrub plays a run.
+A soft, short sine tick per tick crossed, with a quiet octave under it and a faint dark echo.
+Every tick is A4; decade ticks (0, 10, 20…) drop to a low D, so a scrub is a pulse with the decades marked.
 
 ## Without React
 
