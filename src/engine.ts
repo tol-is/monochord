@@ -244,6 +244,10 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
       const x = X(i) + tickLen(i) + (isH ? 14 : 8) - 6 * (1 - vis[i]);
       el.style.transform = `translate3d(${Math.round(x)}px,${Math.round(ys[i] - halfH[i])}px,0)`;
       el.style.opacity = vis[i].toFixed(3);
+      // nearer the focus stacks higher, so squeezed labels at the fisheye's edge tuck under
+      // their neighbours instead of painting over them in document order
+      const z = String(isH ? 2000 : i === cur ? 1999 : Math.round(mag[i] * 1000));
+      if (el.style.zIndex !== z) el.style.zIndex = z;
       el.style.setProperty("--monochord-reveal", reveal.toFixed(3));
     }
 
