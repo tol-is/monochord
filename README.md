@@ -4,7 +4,7 @@ A navigation rail you can pluck. A vertical index drawn as a single string: brin
 left edge and the ticks spread apart under it, labels resolving as they swell. Press and drag to scrub,
 tap to jump. Scrolling, scrubbing and value changes set the string ringing.
 
-Composable parts in the Radix style, for React 19. Extracted from [Stormy Clouds](https://stormyclouds.com).
+Composable parts built on [Base UI](https://base-ui.com)'s `useRender`, for React 19. Extracted from [Stormy Clouds](https://stormyclouds.com).
 
 ## Install
 
@@ -36,7 +36,7 @@ import "monochord/styles.css";
 
 ### `Root`
 
-Owns the value and the physics. Renders a `<nav>` (or your element with `asChild`). Give it a size and
+Owns the value and the physics. Renders a `<nav>`, or your own element via `render`. Give it a size and
 position; the string fills it. Arrow keys, Home and End move focus between items.
 
 | Prop | Type | |
@@ -57,7 +57,8 @@ Drawn in the element's CSS `color`. `trackProps` go to the strip.
 
 ### `Item`
 
-One entry. A `<button>` by default; `asChild` renders your own element (a link, say). The engine sets
+One entry. A `<button>` by default; `render` swaps in your own element, e.g.
+`render={<a href="/page" />}`, or a function `(props, { active }) => …`. The engine sets
 its `transform`; style everything else through:
 
 - `data-state="open" | "closed"`: whether its label is revealed
@@ -72,7 +73,7 @@ Text that resolves out of random glyphs whenever its item opens. Screen readers 
 
 ## Styling
 
-`monochord/styles.css` holds the structural defaults and a Radix-style reveal, all wrapped in `:where()`
+`monochord/styles.css` holds the structural defaults and an eased reveal, all wrapped in `:where()`
 so your classes always win. Custom properties on `Root`: `--monochord-ease`, `--monochord-enter`,
 `--monochord-exit`, `--monochord-track-width`.
 
@@ -92,7 +93,7 @@ A short triangle blip per tick, climbing a minor pentatonic ladder, so a scrub p
 
 ## Demo
 
-`npm run dev`. Four title sets of different lengths and shapes: 181 plate names, 48 cloud types,
-18 essay titles, and the 13-step Beaufort scale.
+`npm run dev`. Eighty-odd famous typefaces, oldest first, from Jenson (1470) to Söhne (2019).
+Each title is set in its own face when that font is installed locally.
 
 MIT © Apostolos Christodoulou

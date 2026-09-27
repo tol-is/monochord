@@ -4,11 +4,12 @@
   --md: oklch(0.6 0 0);
   --lo: oklch(0.38 0 0);
   --line: oklch(0.3 0 0);
+  --mono: "Geist Mono", ui-monospace, monospace;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--md); overflow: hidden; }
-body { font-family: "Geist Mono", ui-monospace, monospace; font-size: 15px; line-height: 1.55; letter-spacing: 0.02em; }
+body { font-family: var(--mono); font-size: 15px; line-height: 1.55; letter-spacing: 0.02em; }
 a { color: inherit; }
 button { font: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 
@@ -23,14 +24,7 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .item[data-highlighted] .num, .item[data-active] .num { color: var(--md); }
 
 /* chrome */
-.bar { position: fixed; top: 20px; right: 28px; left: 88px; z-index: 2; display: flex; justify-content: flex-end; align-items: center; gap: 28px; font-size: 12px; letter-spacing: 0.12em; }
-.sets { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
-.sets button { padding: 5px 10px; border: 1px solid transparent; color: var(--lo); }
-.sets button span { color: var(--line); margin-left: 4px; }
-.sets button:hover { color: var(--fg); }
-.sets button[aria-pressed="true"] { color: var(--fg); border-color: var(--line); }
-.sets button[aria-pressed="true"] span { color: var(--md); }
-.sound { color: var(--lo); white-space: nowrap; }
+.sound { position: fixed; top: 24px; right: 28px; z-index: 2; font-size: 12px; letter-spacing: 0.12em; color: var(--lo); white-space: nowrap; }
 .sound:hover, .sound[aria-pressed="true"] { color: var(--fg); }
 .mark { position: fixed; right: 28px; bottom: 24px; z-index: 2; color: var(--fg); text-decoration: none; font-size: 13px; letter-spacing: 0.2em; }
 :focus-visible { outline: 1px solid var(--fg); outline-offset: 2px; }
@@ -39,7 +33,7 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .gallery { position: fixed; inset: 0; overflow-y: auto; scroll-snap-type: y mandatory; scrollbar-width: none; }
 .gallery::-webkit-scrollbar { display: none; }
 section { height: 100dvh; scroll-snap-align: start; }
-.intro { display: flex; align-items: center; height: auto; min-height: 100dvh; padding: 96px 28px 64px 88px; }
+.intro { display: flex; align-items: center; height: auto; min-height: 100dvh; padding: 72px 28px 64px 88px; }
 .intro-body { max-width: 680px; min-width: 0; }
 .intro h1 { color: var(--fg); font-weight: 400; font-size: 40px; line-height: 1.1; letter-spacing: -0.01em; margin: 0 0 28px; }
 .intro p { margin: 0 0 16px; }
@@ -56,9 +50,9 @@ section { height: 100dvh; scroll-snap-align: start; }
 
 @media (max-width: 640px) {
   .rail { --monochord-track-width: 40px; }
-  .bar { top: 12px; right: 16px; left: 52px; gap: 12px; }
+  .sound { top: 16px; right: 16px; }
   .mark { right: 16px; bottom: 16px; }
-  .intro { padding: 120px 16px 48px 52px; }
+  .intro { padding: 64px 16px 48px 52px; }
   .intro h1 { font-size: 30px; }
   .plate { padding: 0 16px 0 52px; }
 }

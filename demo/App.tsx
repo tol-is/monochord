@@ -1,47 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { Monochord, blip, type MonochordHandle, type SelectSource } from "../src";
-import { SETS, type TitleSet } from "./sets";
+import { FONTS } from "./fonts";
 
 const pad = (i: number) => String(i).padStart(3, "0");
 const REPO = "https://github.com/tol-is/monochord";
 
 export function App() {
-  const [setId, setSetId] = useState(() => new URLSearchParams(location.search).get("set") ?? SETS[0].id);
-  const set = SETS.find((s) => s.id === setId) ?? SETS[0];
   const [sound, setSound] = useState(false);
   const audio = useRef<AudioContext | null>(null);
-
   const toggleSound = () => {
     audio.current ??= new AudioContext();
     void audio.current.resume();
     setSound((s) => !s);
   };
-  const choose = (id: string) => {
-    setSetId(id);
-    history.replaceState(null, "", id === SETS[0].id ? "/" : `/?set=${id}`);
-  };
-
   return (
     <>
-      <header className="bar">
-        <div className="sets" role="group" aria-label="Title set">
-          {SETS.map((s) => (
-            <button key={s.id} aria-pressed={s.id === set.id} onClick={() => choose(s.id)}>
-              {s.name.toUpperCase()} <span>{s.titles.length}</span>
-            </button>
-          ))}
-        </div>
-        <button className="sound" aria-pressed={sound} onClick={toggleSound}>
-          SOUND {sound ? "ON" : "OFF"}
-        </button>
-      </header>
-      <Gallery key={set.id} set={set} onCross={(i, s) => sound && audio.current && blip(audio.current, i, s)} />
+      <button className="sound" aria-pressed={sound} onClick={toggleSound}>
+        SOUND {sound ? "ON" : "OFF"}
+      </button>
+      <Gallery onCross={(i, s) => sound && audio.current && blip(audio.current, i, s)} />
       <a className="mark" href={REPO}>MONOCHORD</a>
     </>
   );
 }
 
-function Gallery({ set, onCross }: { set: TitleSet; onCross: (i: number, s: number) => void }) {
+function Gallery({ onCross }: { onCross: (i: number, s: number) => void }) {
   // undefined = the intro
   const [value, setValue] = useState<string | undefined>(undefined);
   const gallery = useRef<HTMLElement>(null);
@@ -112,18 +95,18 @@ function Gallery({ set, onCross }: { set: TitleSet; onCross: (i: number, s: numb
     <>
       <Monochord.Root
         className="rail"
-        aria-label={set.name}
+        aria-label="Typefaces"
         value={value}
         onValueChange={(v, { source }) => go(v, source)}
         onTickCross={onCross}
         handle={rail}
       >
         <Monochord.String />
-        {set.titles.map((title, i) => (
+        {FONTS.map((f, i) => (
           <Monochord.Item key={i} value={String(i)} className="item">
             <span className="label">
-              <span className="num">{pad(i)}</span>
-              <Monochord.Scramble>{title}</Monochord.Scramble>
+              <span className="num">{f.year.replace("c. ", "")}</span>
+              <Monochord.Scramble>{f.name.toUpperCase()}</Monochord.Scramble>
             </span>
           </Monochord.Item>
         ))}
@@ -136,25 +119,26 @@ function Gallery({ set, onCross }: { set: TitleSet; onCross: (i: number, s: numb
             <p>
               Monochord is a vertical index drawn as a single string. Bring the pointer to the left edge and
               the ticks spread apart under it, labels resolving as they swell. Press and drag to scrub,
-              tap to jump. Scrolling, scrubbing and changing plates all set the string ringing.
+              tap to jump. Scrolling, scrubbing and changing pages all set the string ringing.
             </p>
             <p>
-              It is built from composable parts in the Radix style: <code>Root</code>, <code>String</code>,{" "}
-              <code>Item</code> and <code>Scramble</code>. Items are real buttons or links (<code>asChild</code>),
+              It is built from composable parts on Base UI: <code>Root</code>, <code>String</code>,{" "}
+              <code>Item</code> and <code>Scramble</code>. Items are real buttons, or anything via <code>render</code>,
               styled through <code>data-state</code>, <code>data-highlighted</code> and <code>data-active</code>.
             </p>
             <pre><code>{USAGE}</code></pre>
             <p className="meta">
-              {set.note} · <a href={REPO}>GitHub</a> · MIT · <a href="https://tol.is">tol.is</a>
+              {FONTS.length} famous typefaces, oldest first · <a href={REPO}>GitHub</a> · MIT · <a href="https://tol.is">tol.is</a>
             </p>
             <p className="hint">HOVER THE LEFT EDGE ← · OR SCROLL ↓</p>
           </div>
         </section>
-        {set.titles.map((title, i) => (
+        {FONTS.map((f, i) => (
           <section key={i} data-plate={String(i)} className="plate">
-            <div className="plate-num">{pad(i)}</div>
-            <h2>{title}</h2>
-            <div className="plate-meta">{set.name.toUpperCase()} · {pad(i)} / {pad(set.titles.length - 1)}</div>
+            <div className="plate-num">{pad(i)} / {pad(FONTS.length - 1)}</div>
+            {/* set in the face itself when it's installed locally */}
+            <h2 style={f.family ? { fontFamily: `"${f.family}", var(--mono)` } : undefined}>{f.name}</h2>
+            <div className="plate-meta">{f.designer.toUpperCase()} · {f.year}</div>
           </section>
         ))}
       </main>

@@ -1,6 +1,6 @@
 "use client";
-// Compound parts, Radix-style: Root owns state and the engine, String draws, Item is a real
-// element (button by default, anything with asChild) the engine positions beside its tick.
+// Compound parts on Base UI's useRender: Root owns state and the engine, String draws, Item is a
+// real element (button by default, anything via `render`) the engine positions beside its tick.
 //
 //   <Monochord.Root value={v} onValueChange={setV}>
 //     <Monochord.String />
@@ -9,7 +9,7 @@
 //     ))}
 //   </Monochord.Root>
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
+import { useRender } from "@base-ui/react/use-render";
 import { createEngine, type Engine, type SelectSource } from "./engine";
 
 export type { SelectSource };
@@ -40,7 +40,7 @@ const setRef = <T,>(ref: React.Ref<T> | undefined, node: T | null) => {
 
 /* ─── Root ─── */
 
-export type RootProps = Omit<React.ComponentPropsWithRef<"nav">, "defaultValue" | "onChange"> & {
+export type RootProps = Omit<useRender.ComponentProps<"nav">, "defaultValue" | "onChange"> & {
   value?: string;
   defaultValue?: string;
   onValueChange?: (value: string, details: { source: SelectSource }) => void;
@@ -55,12 +55,11 @@ export type RootProps = Omit<React.ComponentPropsWithRef<"nav">, "defaultValue" 
   /** px of clearance a label needs from its neighbours to open; default 15 */
   labelRoom?: number;
   handle?: React.Ref<MonochordHandle>;
-  asChild?: boolean;
 };
 
 function Root({
   value: valueProp, defaultValue, onValueChange, onTickCross,
-  reach, magnify, spread, labelRoom, handle, asChild, ref, onKeyDown, ...props
+  reach, magnify, spread, labelRoom, handle, render, ref, onKeyDown, ...props
 }: RootProps) {
   const [inner, setInner] = React.useState(defaultValue);
   const value = valueProp !== undefined ? valueProp : inner;
@@ -152,17 +151,13 @@ function Root({
     engine.current?.setKeyFocus(ordered.current.indexOf(el));
   };
 
-  const Comp = asChild ? Slot : "nav";
-  return (
-    <MonochordContext.Provider value={ctx}>
-      <Comp
-        data-monochord-root=""
-        {...props}
-        ref={(node: HTMLElement | null) => { rootRef.current = node; setRef(ref as React.Ref<HTMLElement>, node); }}
-        onKeyDown={handleKeyDown}
-      />
-    </MonochordContext.Provider>
-  );
+  const element = useRender({
+    render,
+    defaultTagName: "nav",
+    ref: [rootRef as React.Ref<HTMLElement>, ref as React.Ref<HTMLElement>],
+    props: { "data-monochord-root": "", ...props, onKeyDown: handleKeyDown },
+  });
+  return <MonochordContext.Provider value={ctx}>{element}</MonochordContext.Provider>;
 }
 
 /* ─── String ─── */
@@ -197,42 +192,42 @@ function StringPart({ trackProps, ref, ...props }: StringProps) {
 
 /* ─── Item ─── */
 
-export type ItemProps = React.ComponentPropsWithRef<"button"> & {
-  value: string;
-  asChild?: boolean;
-};
+export type ItemState = { active: boolean };
+export type ItemProps = useRender.ComponentProps<"button", ItemState> & { value: string };
 
 /**
  * One entry on the string. Carries data-state="open|closed" (label revealed), data-highlighted
  * (nearest the pointer), data-active and aria-current (the current value), and the CSS variable
  * --monochord-reveal (0–1 emphasis). The engine sets its transform; style everything else.
+ * `render` swaps the button for your own element, e.g. render={<a href={url} />}.
  */
-function Item({ value, asChild, ref, onClick, onFocus, onBlur, ...props }: ItemProps) {
+function Item({ value, render, ref, onClick, onFocus, onBlur, ...props }: ItemProps) {
   const ctx = useMonochord("Item");
   const node = React.useRef<HTMLElement | null>(null);
   const { register } = ctx;
   React.useLayoutEffect(() => register(node.current!), [register]);
   const active = ctx.value === value;
-  const Comp = asChild ? Slot : "button";
-  return (
-    <Comp
-      type={asChild ? undefined : "button"}
-      data-monochord-item=""
-      data-value={value}
-      data-active={active ? "" : undefined}
-      aria-current={active ? "true" : undefined}
-      tabIndex={ctx.tabbable === value ? 0 : -1}
-      {...props}
-      ref={(n: HTMLElement | null) => { node.current = n; setRef(ref as React.Ref<HTMLElement>, n); }}
-      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+  return useRender({
+    render,
+    defaultTagName: "button",
+    ref: [node, ref as React.Ref<HTMLElement>],
+    state: { active },
+    props: {
+      type: render ? undefined : "button",
+      "data-monochord-item": "",
+      "data-value": value,
+      "aria-current": active ? "true" : undefined,
+      tabIndex: ctx.tabbable === value ? 0 : -1,
+      ...props,
+      onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
         onClick?.(e);
         // detail 0: Enter/Space, not a pointer
         if (!e.defaultPrevented) ctx.select(value, e.detail === 0 ? "keyboard" : "tap");
-      }}
-      onFocus={(e: React.FocusEvent<HTMLButtonElement>) => { onFocus?.(e); ctx.keyFocus(e.currentTarget); }}
-      onBlur={(e: React.FocusEvent<HTMLButtonElement>) => { onBlur?.(e); ctx.keyFocus(null); }}
-    />
-  );
+      },
+      onFocus: (e: React.FocusEvent<HTMLButtonElement>) => { onFocus?.(e); ctx.keyFocus(e.currentTarget); },
+      onBlur: (e: React.FocusEvent<HTMLButtonElement>) => { onBlur?.(e); ctx.keyFocus(null); },
+    },
+  });
 }
 
 /* ─── Scramble ─── */

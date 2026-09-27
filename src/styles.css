@@ -1,4 +1,4 @@
-/* monochord: structural defaults + Radix-style reveal. Every selector is wrapped in :where()
+/* monochord: structural defaults + eased reveal. Every selector is wrapped in :where()
    (zero specificity), so any class you add wins. Tune motion with the custom properties. */
 :where([data-monochord-root]) {
   --monochord-ease: cubic-bezier(0.16, 1, 0.3, 1);
