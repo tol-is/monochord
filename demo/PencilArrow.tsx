@@ -1,51 +1,79 @@
 import { useLayoutEffect, useState, type RefObject } from "react";
 
-// A pencil arrow in the page background: out of the right of the title, one full loop, then an
-// arc back over the title and down to the rail on the left edge. Placed from the title's box, so
-// it follows the layout; the loop shrinks when there's little room right of the title.
+// A pencil arrow in the page background: out of the right of the title, one full loop, then back
+// under the title and left to the rail. The route is a handful of waypoints placed from the
+// title's box, joined by one Catmull-Rom spline, so the curve stays smooth at any size and a
+// resize simply redraws it. The loop shrinks when there's little room right of the title.
+
+type Pt = [number, number];
+
+// uniform Catmull-Rom through the points, as cubic Béziers (ends padded by repetition)
+const spline = (pts: Pt[]) => {
+  const at = (i: number) => pts[Math.max(0, Math.min(pts.length - 1, i))];
+  const f = (n: number) => n.toFixed(1);
+  let d = `M ${f(pts[0][0])} ${f(pts[0][1])}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [a, b, c, e] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+    const c1: Pt = [b[0] + (c[0] - a[0]) / 6, b[1] + (c[1] - a[1]) / 6];
+    const c2: Pt = [c[0] - (e[0] - b[0]) / 6, c[1] - (e[1] - b[1]) / 6];
+    d += ` C ${f(c1[0])} ${f(c1[1])} ${f(c2[0])} ${f(c2[1])} ${f(c[0])} ${f(c[1])}`;
+  }
+  return d;
+};
+
 export function PencilArrow({ from }: { from: RefObject<HTMLElement | null> }) {
   const [geo, setGeo] = useState<{ d: string; head: string; w: number; h: number } | null>(null);
 
   useLayoutEffect(() => {
+    let raf = 0;
     const measure = () => {
       const el = from.current;
       if (!el) return;
       const w = innerWidth, h = innerHeight;
-      // the glyphs' right edge, not the padded block's
+      // the glyphs' box, not the padded block's
       const range = document.createRange();
       range.selectNodeContents(el);
       const r = range.getBoundingClientRect();
-      const x0 = r.right + 14, cy = r.top + r.height * 0.55;
-      const s = Math.max(0.45, Math.min(1, (w - x0 - 12) / 130));
-      const P = (dx: number, dy: number) => `${(x0 + dx * s).toFixed(1)} ${(cy + dy * s).toFixed(1)}`;
-      // the tip sits just right of the resting rail, level with the title
-      const tx = w < 640 ? 44 : 64, ty = cy + 6;
-      // the arc clears the title with room to spare, even when the loop is scaled down
-      const top = Math.max(24, r.top - Math.max(100, 110 * s));
-      const d = [
-        `M ${P(0, 4)}`,
-        // out and up into the loop
-        `C ${P(40, 10)} ${P(96, -8)} ${P(98, -46)}`,
-        // over the top and back down: the loop closes across its own stroke
-        `C ${P(100, -86)} ${P(44, -92)} ${P(40, -58)}`,
-        `C ${P(36, -26)} ${P(92, -18)} ${P(112, -50)}`,
-        // a long arc back over the title
-        `C ${P(128, -76)} ${Math.max(x0 + 90 * s, w / 2 + 40).toFixed(1)} ${top.toFixed(1)} ${(w / 2).toFixed(1)} ${top.toFixed(1)}`,
-        // down the left side, coming in nearly level so it points at the rail
-        `C ${(w / 2 - Math.max(40, (w / 2 - tx) * 0.45)).toFixed(1)} ${top.toFixed(1)} ${(tx + 64).toFixed(1)} ${(ty - 26).toFixed(1)} ${tx} ${ty}`,
-      ].join(" ");
-      // arrowhead: two strokes back along the last tangent
-      const ax = 64, ay = -26, len = Math.hypot(ax, ay);
-      const ux = ax / len, uy = ay / len, L = 14;
+      const x0 = r.right + 12, cy = r.top + r.height * 0.5;
+      const s = Math.max(0.45, Math.min(1, (w - x0 - 12) / 120));
+      const L = (dx: number, dy: number): Pt => [x0 + dx * s, cy + dy * s];
+      // under the title, in the gap before the description
+      const u = r.bottom + 20;
+      // the tip sits just right of the resting rail
+      const tx = w < 640 ? 44 : 64;
+      const pts: Pt[] = [
+        L(0, 4),
+        L(40, 0),
+        // the loop: up the right, over the top, down the left and back across its own stroke
+        L(74, -16),
+        L(84, -42),
+        L(72, -64),
+        L(50, -72),
+        L(28, -64),
+        L(18, -42),
+        L(28, -18),
+        L(50, -6),
+        // swing out and down, then back left under the title
+        L(84, 20),
+        [x0 + 20 * s, u],
+        [(r.left + r.right) / 2, u + 6],
+        [Math.max(tx + 50, r.left - 40), u + 2],
+        [tx, u - 2],
+      ];
+      const d = spline(pts);
+      // arrowhead: two strokes back along the last stretch
+      const [px, py] = pts[pts.length - 2], [ex, ey] = pts[pts.length - 1];
+      const len = Math.hypot(px - ex, py - ey), ux = (px - ex) / len, uy = (py - ey) / len;
       const rot = (a: number) => [ux * Math.cos(a) - uy * Math.sin(a), ux * Math.sin(a) + uy * Math.cos(a)];
-      const [lx, ly] = rot(0.5), [rx, ry] = rot(-0.45);
-      const head = `M ${tx + lx * L} ${ty + ly * L} L ${tx} ${ty} L ${tx + rx * (L + 2)} ${ty + ry * (L + 2)}`;
+      const [lx, ly] = rot(0.5), [rx, ry] = rot(-0.45), H = 13;
+      const head = `M ${ex + lx * H} ${ey + ly * H} L ${ex} ${ey} L ${ex + rx * (H + 2)} ${ey + ry * (H + 2)}`;
       setGeo({ d, head, w, h });
     };
+    const onResize = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
     measure();
-    addEventListener("resize", measure);
+    addEventListener("resize", onResize);
     document.fonts?.ready.then(measure);
-    return () => removeEventListener("resize", measure);
+    return () => { cancelAnimationFrame(raf); removeEventListener("resize", onResize); };
   }, [from]);
 
   if (!geo) return null;

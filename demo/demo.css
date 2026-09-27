@@ -64,7 +64,7 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .links a::before { content: "["; position: absolute; left: -14px; opacity: 0; transform: translateX(-4px); transition: opacity 0.2s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
 .links a:hover, .links a:focus-visible { color: var(--fg); }
 .links a:hover::before, .links a:focus-visible::before { opacity: 1; transform: none; }
-.intro h1 { color: var(--fg); font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: 0.24em; margin: 0 0 22px; padding-left: 0.24em; }
+.intro h1 { color: var(--fg); font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: 0.24em; margin: 0 0 44px; padding-left: 0.24em; }
 .intro .lede { color: var(--md); font-size: 15px; letter-spacing: 0.04em; margin: 0 0 32px; }
 .intro p { margin: 0 0 16px; }
 
