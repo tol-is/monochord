@@ -89,7 +89,7 @@ function Page({ audio, muted, preset, voices }: { audio: AudioContext | null; mu
       <main className="intro">
         <div className="intro-body">
           <h1 ref={title}>MONOCHORD</h1>
-          <p className="lede">A vertical index navigation.</p>
+          <p className="lede">Navigation with a string attached.</p>
           {voices}
           <nav className="links" aria-label="Project">
             <a href="/AGENTS.md">AGENTS.MD ↗</a>
