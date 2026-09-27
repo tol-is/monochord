@@ -44,7 +44,7 @@ position; the string fills it. Arrow keys, Home and End move focus between items
 | --- | --- | --- |
 | `value` / `defaultValue` | `string` | controlled / uncontrolled current item |
 | `onValueChange` | `(value, { source }) => void` | `source` is `"tap"`, `"scrub"` or `"keyboard"` |
-| `onTickCross` | `(index, strength) => void` | each tick crossed; hook sound here |
+| `onTickCross` | `(index, event) => void` | each tick crossed or chosen; see [Tick events](#tick-events) |
 | `reach` | `number` | px right of the string that opens the fisheye (240, or 60 under 400px wide) |
 | `magnify` | `number` | extra spacing at the focus, in ticks (7) |
 | `spread` | `number` | fisheye width, in ticks (5.5) |
@@ -67,6 +67,10 @@ its `transform`; style everything else through:
 - `data-active`, `aria-current`: the current value
 - `--monochord-reveal`: 0 to 1 emphasis while open
 
+### `Sound`
+
+Plays a note per tick; renders nothing. See [Sound](#sound).
+
 ### `Scramble`
 
 Text that resolves out of random glyphs whenever its item opens. Screen readers get the plain text.
@@ -80,13 +84,53 @@ so your classes always win. Custom properties on `Root`: `--monochord-ease`, `--
 
 ## Sound
 
-```ts
-import { blip } from "monochord";
-<Monochord.Root onTickCross={(i, s) => blip(audioCtx, i, s)} />
+Silent by default. Add a `Sound` part to give each tick a note:
+
+```tsx
+<Monochord.Root>
+  <Monochord.String />
+  <Monochord.Sound context={audioCtx} muted={!soundOn} />
+  …
+</Monochord.Root>
 ```
 
-A soft, short sine tick per tick crossed, with a quiet octave under it and a faint dark echo.
-Every tick is A4; decade ticks (0, 10, 20…) drop to a low D, so a scrub is a pulse with the decades marked.
+Create the `AudioContext` on a user gesture (browsers block audio until then); nothing plays while
+`context` is missing. The default is a pulse: every tick A4, decade ticks (0, 10, 20…) a low D, as a
+soft, short sine with a quiet octave under it and a faint dark echo. Every part of it is a prop:
+
+| Prop | Default | |
+| --- | --- | --- |
+| `pitch` | `pulse("A4", "D3")` | `(index, event) => Hz`; return `null` for silence |
+| `voices` | `[[1, 1], [0.5, 0.45]]` | `[multiple of the pitch, level]` per oscillator |
+| `wave` | `"sine"` | any `OscillatorType` |
+| `attack` / `decay` | `0.006` / `0.035` | seconds (decay is a time constant) |
+| `volume` | `0.06` | peak level at strength 1 |
+| `echo` | `{ time: 0.23, feedback: 0.25, wet: 0.15, cutoff: 1300 }` | or `false` for a dry note |
+| `destination` | `context.destination` | route into your own mixer |
+| `kinds` | all | which ticks sound: `"hover"`, `"scrub"`, `"tap"`, `"keyboard"` |
+| `muted` | `false` | |
+
+Pitch presets:
+
+```ts
+import { pulse, scale, note } from "monochord";
+
+pulse("A4", "D3")                                  // one note, decades marked by another
+scale("D3", "minor")                               // each decade falls from high to D3, then starts again
+scale("A3", "pentatonic", { per: 15, direction: "up" })  // climbs; also major, dorian, chromatic, or your own intervals
+note("C4")                                         // every tick the same
+(i, e) => (e.kind === "tap" ? 880 : null)          // your own: sound only on taps
+```
+
+Without the part, `createBlip(ctx, options)` returns a `play(index, event)` function with the same
+options (plus `.set(options)` and `.dispose()`), for `onTickCross` or code outside React.
+
+### Tick events
+
+`onTickCross(index, event)` fires for every tick crossed or chosen. `event.kind` says why (`"hover"`,
+`"scrub"`, `"tap"`, `"keyboard"`), `event.strength` is a loudness hint (0.5, 1, 1.4, 1.4), and
+`event.decade` marks multiples of ten. Use it for your own sound, haptics (`navigator.vibrate`) or
+analytics.
 
 ## Without React
 

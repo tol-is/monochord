@@ -6,6 +6,8 @@
 // Items are DOM elements the engine positions next to their tick each frame and flags with
 // data-state="open|closed" and data-highlighted, so labels stay real, styleable, focusable nodes.
 
+import type { TickKind } from "./sound";
+
 export type SelectSource = "tap" | "scrub" | "keyboard";
 
 export type EngineOptions = {
@@ -18,7 +20,8 @@ export type EngineOptions = {
   /** minimum px between neighbouring ticks before a label may open; default the label's font size − 3 */
   labelRoom?: number;
   onSelect: (index: number, source: SelectSource) => void;
-  onCross?: (index: number, strength: number) => void;
+  /** a tick was crossed or chosen */
+  onCross?: (index: number, kind: TickKind) => void;
 };
 
 export type Engine = ReturnType<typeof createEngine>;
@@ -108,7 +111,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     if (i === lastHover) return;
     lastHover = i;
     opts.onSelect(i, "scrub");
-    opts.onCross?.(i, 1);
+    opts.onCross?.(i, "scrub");
     pluck(i, 6 + Math.random() * 3, 30);
   };
   const onDown = (e: PointerEvent) => {
@@ -132,7 +135,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     } else if (downItem < 0) {
       const i = indexAt(local()[1]);
       opts.onSelect(i, "tap");
-      opts.onCross?.(i, 1.4);
+      opts.onCross?.(i, "tap");
     }
     // a tap on an item selects through its own click handler (so links and keyboard behave)
     pluck(lastHover, 20, 80);
@@ -196,7 +199,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     }
     // hover blips as the pointer crosses ticks
     if (near > 0.6 && !scrub && pointerNear) {
-      if (hovered !== lastHover && hovered >= 0) { lastHover = hovered; opts.onCross?.(hovered, 0.5); }
+      if (hovered !== lastHover && hovered >= 0) { lastHover = hovered; opts.onCross?.(hovered, "hover"); }
     } else if (!scrub && near < 0.2) lastHover = -1;
 
     const sway = (y: number) => 1.2 * Math.sin(t * 1.3 + y * 0.02) * (1 - near);

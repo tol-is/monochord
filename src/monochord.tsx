@@ -11,8 +11,10 @@
 import * as React from "react";
 import { useRender } from "@base-ui/react/use-render";
 import { createEngine, type Engine, type SelectSource } from "./engine";
+import { createBlip, tickEvent, type Blip, type BlipOptions, type TickEvent, type TickKind } from "./sound";
 
-export type { SelectSource };
+export type { SelectSource, TickEvent, TickKind };
+type TickListener = (index: number, event: TickEvent) => void;
 export type MonochordHandle = {
   /** light pluck at the current tick from scroll velocity (delta × ~3); rate-limited to every 120 ms */
   kick(velocity: number): void;
@@ -25,6 +27,8 @@ type Ctx = {
   attach(canvas: HTMLCanvasElement | null, track: HTMLElement | null): void;
   select(value: string, source: SelectSource): void;
   keyFocus(el: HTMLElement | null): void;
+  /** subscribe to ticks crossed; returns the unsubscribe */
+  onTick(listener: TickListener): () => void;
 };
 const MonochordContext = React.createContext<Ctx | null>(null);
 const useMonochord = (part: string) => {
@@ -44,8 +48,8 @@ export type RootProps = Omit<useRender.ComponentProps<"nav">, "defaultValue" | "
   value?: string;
   defaultValue?: string;
   onValueChange?: (value: string, details: { source: SelectSource }) => void;
-  /** fires for each tick crossed: strength ~0.5 hover, 1 scrub, 1.4 tap. Hook sound here. */
-  onTickCross?: (index: number, strength: number) => void;
+  /** fires for each tick crossed or chosen, with why (`kind`) and a loudness hint (`strength`) */
+  onTickCross?: (index: number, event: TickEvent) => void;
   /** px right of the string that still opens the fisheye; default 240 (60 when narrower than 400px) */
   reach?: number;
   /** spacing given to the focused tick, in tick units; default 7 */
@@ -72,6 +76,12 @@ function Root({
   const [values, setValues] = React.useState<string[]>([]);
 
   const latest = React.useRef({ controlled: false, onValueChange, onTickCross });
+  const listeners = React.useRef(new Set<TickListener>());
+  const tick = React.useCallback((i: number, kind: TickKind) => {
+    const e = tickEvent(i, kind);
+    latest.current.onTickCross?.(i, e);
+    for (const l of listeners.current) l(i, e);
+  }, []);
   latest.current = { controlled: valueProp !== undefined, onValueChange, onTickCross };
 
   const select = React.useCallback((v: string, source: SelectSource) => {
@@ -85,7 +95,7 @@ function Root({
       const v = ordered.current[i]?.dataset.value;
       if (v !== undefined) select(v, source);
     },
-    onCross: (i: number, s: number) => latest.current.onTickCross?.(i, s),
+    onCross: tick,
   };
 
   React.useLayoutEffect(() => {
@@ -124,17 +134,21 @@ function Root({
   }, []);
   const selectItem = React.useCallback((v: string, source: SelectSource) => {
     const i = ordered.current.findIndex((el) => el.dataset.value === v);
-    if (i >= 0) latest.current.onTickCross?.(i, 1.4);
+    if (i >= 0) tick(i, source === "keyboard" ? "keyboard" : "tap");
     select(v, source);
-  }, [select]);
+  }, [select, tick]);
+  const onTick = React.useCallback((l: TickListener) => {
+    listeners.current.add(l);
+    return () => { listeners.current.delete(l); };
+  }, []);
   const keyFocus = React.useCallback((el: HTMLElement | null) => {
     engine.current?.setKeyFocus(el && el.matches(":focus-visible") ? ordered.current.indexOf(el) : -1);
   }, []);
   const ctx = React.useMemo<Ctx>(() => ({
     value,
     tabbable: value !== undefined && values.includes(value) ? value : values[0],
-    register, attach, select: selectItem, keyFocus,
-  }), [value, values, register, attach, selectItem, keyFocus]);
+    register, attach, select: selectItem, keyFocus, onTick,
+  }), [value, values, register, attach, selectItem, keyFocus, onTick]);
 
   // roving focus: arrows walk the items, Home/End jump to the ends
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
@@ -230,6 +244,36 @@ function Item({ value, render, ref, onClick, onFocus, onBlur, ...props }: ItemPr
   });
 }
 
+/* ─── Sound ─── */
+
+export type SoundProps = BlipOptions & {
+  /** the AudioContext to play on; create it on a user gesture. Nothing plays while it's missing. */
+  context: AudioContext | null | undefined;
+  muted?: boolean;
+  /** which ticks sound; default all: ["hover", "scrub", "tap", "keyboard"] */
+  kinds?: TickKind[];
+};
+
+/** Plays a note for each tick crossed. Renders nothing; leave it out for a silent rail. */
+function Sound({ context, muted = false, kinds, ...options }: SoundProps) {
+  const { onTick } = useMonochord("Sound");
+  const blip = React.useRef<Blip | null>(null);
+  const latest = React.useRef({ muted, kinds });
+  latest.current = { muted, kinds };
+  React.useEffect(() => {
+    if (!context) return;
+    const b = (blip.current = createBlip(context, options));
+    const off = onTick((i, e) => {
+      const { muted, kinds } = latest.current;
+      if (!muted && (!kinds || kinds.includes(e.kind))) b(i, e);
+    });
+    return () => { off(); b.dispose(); blip.current = null; };
+    // options are pushed live below; only a new context rebuilds the voice
+  }, [context, onTick]);
+  React.useEffect(() => { blip.current?.set(options); });
+  return null;
+}
+
 /* ─── Scramble ─── */
 
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%*+=/<>";
@@ -281,4 +325,4 @@ const srOnly: React.CSSProperties = {
   position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap",
 };
 
-export { Root, StringPart as String, Item, Scramble };
+export { Root, StringPart as String, Item, Sound, Scramble };

@@ -1,1 +1,1 @@
-export { Root, String, Item, Scramble } from "./monochord";
+export { Root, String, Item, Sound, Scramble } from "./monochord";

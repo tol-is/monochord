@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Monochord, blip, type MonochordHandle, type SelectSource } from "../src";
+import { Monochord, type MonochordHandle, type SelectSource } from "../src";
 import { FONTS } from "./fonts";
 
 const pad = (i: number) => String(i).padStart(3, "0");
@@ -7,10 +7,12 @@ const REPO = "https://github.com/tol-is/monochord";
 
 export function App() {
   const [sound, setSound] = useState(false);
-  const audio = useRef<AudioContext | null>(null);
+  // audio may only start from a gesture: the first toggle creates the context
+  const [audio, setAudio] = useState<AudioContext | null>(null);
   const toggleSound = () => {
-    audio.current ??= new AudioContext();
-    void audio.current.resume();
+    const ctx = audio ?? new AudioContext();
+    void ctx.resume();
+    setAudio(ctx);
     setSound((s) => !s);
   };
   return (
@@ -18,13 +20,13 @@ export function App() {
       <button className="sound" aria-pressed={sound} onClick={toggleSound}>
         SOUND {sound ? "ON" : "OFF"}
       </button>
-      <Gallery onCross={(i, s) => sound && audio.current && blip(audio.current, i, s)} />
+      <Gallery audio={audio} muted={!sound} />
       <a className="mark" href={REPO}>MONOCHORD</a>
     </>
   );
 }
 
-function Gallery({ onCross }: { onCross: (i: number, s: number) => void }) {
+function Gallery({ audio, muted }: { audio: AudioContext | null; muted: boolean }) {
   // undefined = the intro
   const [value, setValue] = useState<string | undefined>(undefined);
   const gallery = useRef<HTMLElement>(null);
@@ -98,10 +100,10 @@ function Gallery({ onCross }: { onCross: (i: number, s: number) => void }) {
         aria-label="Typefaces"
         value={value}
         onValueChange={(v, { source }) => go(v, source)}
-        onTickCross={onCross}
         handle={rail}
       >
         <Monochord.String />
+        <Monochord.Sound context={audio} muted={muted} />
         {FONTS.map((f, i) => (
           <Monochord.Item key={i} value={String(i)} className="item">
             <span className="label">
@@ -123,7 +125,7 @@ function Gallery({ onCross }: { onCross: (i: number, s: number) => void }) {
             </p>
             <p>
               It is built from composable parts on Base UI: <code>Root</code>, <code>String</code>,{" "}
-              <code>Item</code> and <code>Scramble</code>. Items are real buttons, or anything via <code>render</code>,
+              <code>Item</code>, <code>Sound</code> and <code>Scramble</code>. Items are real buttons, or anything via <code>render</code>,
               styled through <code>data-state</code>, <code>data-highlighted</code> and <code>data-active</code>.
             </p>
             <pre><code>{USAGE}</code></pre>
@@ -153,6 +155,7 @@ import "monochord/styles.css";
 
 <Monochord.Root value={page} onValueChange={setPage}>
   <Monochord.String />
+  <Monochord.Sound context={audioCtx} />
   {pages.map((p) => (
     <Monochord.Item key={p.id} value={p.id}>
       <Monochord.Scramble>{p.title}</Monochord.Scramble>
