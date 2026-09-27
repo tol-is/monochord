@@ -33,17 +33,22 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .speaker { display: block; padding: 6px; color: var(--lo); }
 .speaker svg { display: block; }
 .speaker:hover, .speaker[aria-pressed="true"] { color: var(--fg); }
-.mark { position: fixed; right: 28px; bottom: 24px; z-index: 2; color: var(--fg); text-decoration: none; font-size: 13px; letter-spacing: 0.2em; }
 :focus-visible { outline: 1px solid var(--fg); outline-offset: 2px; }
 
 /* the page: one centered screen; it scrolls only if the intro is taller than the viewport */
 .intro { position: fixed; inset: 0; overflow-y: auto; display: flex; padding: 72px 88px 64px; text-align: center; }
 .intro-body { max-width: 680px; min-width: 0; margin: auto; }
-.intro pre { text-align: left; }
-.intro h1 { color: var(--fg); font-weight: 400; font-size: 40px; line-height: 1.1; letter-spacing: -0.01em; margin: 0 0 28px; }
+.code pre { margin: 0 0 12px; padding: 16px 20px; border: 1px solid var(--line); font-size: 13px; line-height: 1.6; overflow-x: auto; text-align: left; }
+.code:first-of-type pre { padding: 12px 20px; }
+.code code { font-family: var(--mono); }
+.links { display: flex; justify-content: center; gap: 28px; margin: 28px 0 12px; font-size: 13px; letter-spacing: 0.16em; }
+.links a { color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+.links a:hover { border-color: var(--fg); }
+.intro h1 { color: var(--fg); font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: 0.24em; margin: 0 0 20px; padding-left: 0.24em; }
+.intro .lede { color: var(--md); font-size: 16px; margin: 0 0 24px; }
+.badges { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0 0 40px; padding: 0; }
+.badges li { padding: 3px 10px; border: 1px solid var(--line); color: var(--md); font-size: 11px; letter-spacing: 0.16em; }
 .intro p { margin: 0 0 16px; }
-.intro code { color: var(--fg); }
-.intro pre { margin: 24px 0; padding: 18px 20px; border: 1px solid var(--line); font-size: 13px; line-height: 1.6; overflow-x: auto; }
 .intro .meta { color: var(--lo); font-size: 13px; }
 .intro .meta a { text-decoration: none; color: var(--md); }
 .intro .meta a:hover { color: var(--fg); }
@@ -54,7 +59,7 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
   .controls { top: 10px; right: 8px; gap: 4px; }
   .voices { font-size: 10px; letter-spacing: 0.08em; }
   .voices button { padding: 4px 5px; }
-  .mark { right: 16px; bottom: 16px; }
+
   .intro { padding: 64px 52px 48px; }
-  .intro h1 { font-size: 30px; }
+  .intro h1 { font-size: 30px; letter-spacing: 0.18em; padding-left: 0.18em; }
 }

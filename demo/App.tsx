@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Monochord, createBlip, tickEvent } from "../src";
 import { SOUNDS, type SoundPreset } from "./sounds";
+import { install, usage } from "virtual:code";
 import { FONTS } from "./fonts";
 
 const REPO = "https://github.com/tol-is/monochord";
+const NPM = "https://www.npmjs.com/package/monochord";
 
 export function App() {
   const [sound, setSound] = useState(false);
@@ -48,7 +50,6 @@ export function App() {
         </button>
       </div>
       <Page audio={audio} muted={!sound} preset={preset} />
-      <a className="mark" href={REPO}>MONOCHORD</a>
     </>
   );
 }
@@ -73,39 +74,23 @@ function Page({ audio, muted, preset }: { audio: AudioContext | null; muted: boo
 
       <main className="intro">
         <div className="intro-body">
-          <h1>A navigation rail you can pluck.</h1>
-          <p>
-            Monochord is a vertical index drawn as a single string. Bring the pointer to the left edge and
-            the ticks spread apart under it, labels resolving as they swell. Press and drag to scrub,
-            tap to jump. Every pluck sets the string ringing.
-          </p>
-          <p>
-            It is built from composable parts on Base UI: <code>Root</code>, <code>String</code>,{" "}
-            <code>Item</code>, <code>Sound</code> and <code>Scramble</code>. Items are real buttons, or anything via <code>render</code>,
-            styled through <code>data-state</code>, <code>data-highlighted</code> and <code>data-active</code>.
-          </p>
-          <pre><code>{USAGE}</code></pre>
-          <p className="meta">
-            {FONTS.length} famous typefaces, oldest first · <a href={REPO}>GitHub</a> · MIT · <a href="https://tol.is">tol.is</a>
-          </p>
+          <h1>MONOCHORD</h1>
+          <p className="lede">A vertical index navigation, drawn as a single string you can pluck.</p>
+          <ul className="badges" aria-label="Built with">
+            <li>REACT</li>
+            <li>BASE UI</li>
+            <li>MIT</li>
+          </ul>
+          <div className="code" dangerouslySetInnerHTML={{ __html: install }} />
+          <div className="code" dangerouslySetInnerHTML={{ __html: usage }} />
+          <nav className="links" aria-label="Project">
+            <a href={REPO}>GITHUB ↗</a>
+            <a href={NPM}>NPM ↗</a>
+          </nav>
+          <p className="meta">{FONTS.length} famous typefaces, oldest first · <a href="https://tol.is">tol.is</a></p>
           <p className="hint">HOVER THE LEFT EDGE ←</p>
         </div>
       </main>
     </>
   );
 }
-
-const USAGE = `npm i monochord
-
-import { Monochord } from "monochord";
-import "monochord/styles.css";
-
-<Monochord.Root value={page} onValueChange={setPage}>
-  <Monochord.String />
-  <Monochord.Sound context={audioCtx} />
-  {pages.map((p) => (
-    <Monochord.Item key={p.id} value={p.id}>
-      <Monochord.Scramble>{p.title}</Monochord.Scramble>
-    </Monochord.Item>
-  ))}
-</Monochord.Root>`;
