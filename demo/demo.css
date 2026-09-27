@@ -24,8 +24,8 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .item[data-highlighted] .num, .item[data-active] .num { color: var(--md); }
 
 /* chrome */
-/* top right: the voices, then the pixel speaker (waves when on, a cross when off) */
-.controls { position: fixed; top: 20px; right: 22px; z-index: 2; display: flex; align-items: center; gap: 14px; }
+/* under the description: the voices, then the pixel speaker (waves when on, a cross when off) */
+.controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 0 28px; }
 .voices { display: flex; gap: 2px; font-size: 12px; letter-spacing: 0.12em; }
 .voices button { padding: 5px 8px; border: 1px solid transparent; color: var(--lo); }
 .voices button:hover { color: var(--fg); }
@@ -41,18 +41,18 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .code pre { margin: 0 0 12px; padding: 16px 20px; border: 1px solid var(--line); font-size: 13px; line-height: 1.6; overflow-x: auto; text-align: left; }
 .code:first-of-type pre { padding: 12px 20px; }
 .code code { font-family: var(--mono); }
-.links { display: flex; justify-content: center; gap: 28px; margin: 28px 0 12px; font-size: 13px; letter-spacing: 0.16em; }
+.links { display: flex; justify-content: center; gap: 28px; margin: 0 0 28px; font-size: 13px; letter-spacing: 0.16em; }
 .links a { color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
 .links a:hover { border-color: var(--fg); }
 .intro h1 { color: var(--fg); font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: 0.24em; margin: 0 0 20px; padding-left: 0.24em; }
 .intro .lede { color: var(--md); font-size: 16px; margin: 0 0 24px; }
-.badges { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0 0 40px; padding: 0; }
+.badges { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; list-style: none; margin: 28px 0 0; padding: 0; }
 .badges li { padding: 3px 10px; border: 1px solid var(--line); color: var(--md); font-size: 11px; letter-spacing: 0.16em; }
 .intro p { margin: 0 0 16px; }
 
 @media (max-width: 640px) {
   .rail { --monochord-track-width: 40px; }
-  .controls { top: 10px; right: 8px; gap: 4px; }
+  .controls { gap: 2px; }
   .voices { font-size: 10px; letter-spacing: 0.08em; }
   .voices button { padding: 4px 5px; }
 
