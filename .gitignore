@@ -3,3 +3,4 @@ lib
 site
 .vercel
 .DS_Store
+.env*
