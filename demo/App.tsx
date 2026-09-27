@@ -87,8 +87,6 @@ function Page({ audio, muted, preset }: { audio: AudioContext | null; muted: boo
             <a href={REPO}>GITHUB ↗</a>
             <a href={NPM}>NPM ↗</a>
           </nav>
-          <p className="meta">{FONTS.length} famous typefaces, oldest first · <a href="https://tol.is">tol.is</a></p>
-          <p className="hint">HOVER THE LEFT EDGE ←</p>
         </div>
       </main>
     </>

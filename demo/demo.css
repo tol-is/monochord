@@ -49,10 +49,6 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .badges { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0 0 40px; padding: 0; }
 .badges li { padding: 3px 10px; border: 1px solid var(--line); color: var(--md); font-size: 11px; letter-spacing: 0.16em; }
 .intro p { margin: 0 0 16px; }
-.intro .meta { color: var(--lo); font-size: 13px; }
-.intro .meta a { text-decoration: none; color: var(--md); }
-.intro .meta a:hover { color: var(--fg); }
-.intro .hint { color: var(--lo); font-size: 12px; letter-spacing: 0.16em; margin-top: 32px; }
 
 @media (max-width: 640px) {
   .rail { --monochord-track-width: 40px; }
