@@ -24,7 +24,7 @@ import { Monochord } from "monochord";
   <Monochord.String />
   {pages.map((p) => (
     <Monochord.Item key={p.id} value={p.id}>
-      <Monochord.Scramble>{p.title}</Monochord.Scramble>
+      <Monochord.Label>{p.title}</Monochord.Label>
     </Monochord.Item>
   ))}
 </Monochord.Root>
@@ -73,10 +73,10 @@ its `transform` and `opacity`; style everything else through:
 
 Plays a note per tick; renders nothing. See [Sound](#sound).
 
-### `Scramble`
+### `Label`
 
-Text that resolves out of random glyphs whenever its item opens. Screen readers get the plain text.
-`speed` (ms per character, 18) and `glyphs`.
+The visible text of an item: a plain `<span>` (or your element via `render`), styled however you like.
+Optional; an item can hold anything.
 
 ## Styling
 

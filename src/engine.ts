@@ -218,7 +218,7 @@ export function createEngine(root: HTMLElement, initial: EngineOptions) {
     const tickLen = (i: number) => (i % 10 === 0 ? 9 : 5) + 34 * mag[i] + (i === cur ? 18 : 0);
 
     // items: open when their tick has swollen and has a line of room, or when current at rest.
-    // They appear at once (a Scramble inside is the entrance, as in the original) and fade out.
+    // They appear at once and fade out.
     const kOut = still.matches ? Infinity : 24;
     for (let i = 0; i < N; i++) {
       const el = items[i];

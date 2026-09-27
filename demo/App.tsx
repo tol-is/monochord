@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Monochord, createBlip, tickEvent } from "../src";
 import { SOUNDS, type SoundPreset } from "./sounds";
-import { install, usage } from "virtual:code";
 import { FONTS } from "./fonts";
 
 const REPO = "https://github.com/tol-is/monochord";
@@ -72,10 +71,10 @@ function Page({ audio, muted, preset, voices }: { audio: AudioContext | null; mu
         <Monochord.Sound context={audio} muted={muted} kinds={preset.kinds} {...preset.options} />
         {FONTS.map((f, i) => (
           <Monochord.Item key={i} value={String(i)} className="item">
-            <span className="label">
+            <Monochord.Label className="label">
               <span className="num">{f.year.replace("c. ", "")}</span>
-              <Monochord.Scramble>{f.name.toUpperCase()}</Monochord.Scramble>
-            </span>
+              {f.name.toUpperCase()}
+            </Monochord.Label>
           </Monochord.Item>
         ))}
       </Monochord.Root>
@@ -89,8 +88,6 @@ function Page({ audio, muted, preset, voices }: { audio: AudioContext | null; mu
             <a href={REPO}>GITHUB ↗</a>
             <a href={NPM}>NPM ↗</a>
           </nav>
-          <div className="code" dangerouslySetInnerHTML={{ __html: install }} />
-          <div className="code" dangerouslySetInnerHTML={{ __html: usage }} />
           <ul className="badges" aria-label="Built with">
             <li>REACT</li>
             <li>BASE UI</li>

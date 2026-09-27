@@ -1,1 +1,1 @@
-export { Root, String, Item, Sound, Scramble } from "./monochord.js";
+export { Root, String, Item, Label, Sound } from "./monochord.js";

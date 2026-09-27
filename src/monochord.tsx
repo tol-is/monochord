@@ -5,7 +5,7 @@
 //   <Monochord.Root value={v} onValueChange={setV}>
 //     <Monochord.String />
 //     {pages.map((p) => (
-//       <Monochord.Item key={p.id} value={p.id}><Monochord.Scramble>{p.title}</Monochord.Scramble></Monochord.Item>
+//       <Monochord.Item key={p.id} value={p.id}><Monochord.Label>{p.title}</Monochord.Label></Monochord.Item>
 //     ))}
 //   </Monochord.Root>
 import * as React from "react";
@@ -303,55 +303,13 @@ function Sound({ context, muted = false, kinds, ...options }: SoundProps) {
   return null;
 }
 
-/* ─── Scramble ─── */
+/* ─── Label ─── */
 
-const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%*+=/<>";
+export type LabelProps = useRender.ComponentProps<"span">;
 
-export type ScrambleProps = Omit<React.ComponentPropsWithoutRef<"span">, "children"> & {
-  children: string;
-  /** ms per character resolved; default 18 */
-  speed?: number;
-  glyphs?: string;
-};
-
-/** Text that resolves out of random glyphs each time its Item opens. Screen readers get the plain text. */
-function Scramble({ children: text, speed = 18, glyphs = GLYPHS, ...props }: ScrambleProps) {
-  const span = React.useRef<HTMLSpanElement>(null);
-  React.useLayoutEffect(() => {
-    const el = span.current!, item = el.closest("[data-monochord-item]");
-    if (!item) return;
-    let raf = 0;
-    const run = (t0: number) => {
-      const step = (now: number) => {
-        const resolved = Math.floor((now - t0) / speed);
-        let out = "";
-        for (let c = 0; c < text.length; c++) {
-          out += c < resolved || text[c] === " " ? text[c] : glyphs[(Math.random() * glyphs.length) | 0];
-        }
-        el.textContent = out;
-        if (resolved < text.length) raf = requestAnimationFrame(step);
-      };
-      raf = requestAnimationFrame(step);
-    };
-    const sync = () => {
-      cancelAnimationFrame(raf);
-      if (item.getAttribute("data-state") === "open") run(performance.now());
-      else el.textContent = text;
-    };
-    const mo = new MutationObserver(sync);
-    mo.observe(item, { attributes: true, attributeFilter: ["data-state"] });
-    el.textContent = text;
-    return () => { mo.disconnect(); cancelAnimationFrame(raf); };
-  }, [text, speed, glyphs]);
-  return (
-    <span data-monochord-scramble="" {...props}>
-      <span aria-hidden ref={span}>{text}</span>
-      <span style={srOnly}>{text}</span>
-    </span>
-  );
+/** The visible text of an Item. A plain span (or anything via `render`) to style and fill freely. */
+function Label({ render, ...props }: LabelProps) {
+  return useRender({ render, defaultTagName: "span", props: { "data-monochord-label": "", ...props } });
 }
-const srOnly: React.CSSProperties = {
-  position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap",
-};
 
-export { Root, StringPart as String, Item, Sound, Scramble };
+export { Root, StringPart as String, Item, Label, Sound };
