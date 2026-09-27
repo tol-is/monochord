@@ -24,8 +24,15 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .item[data-highlighted] .num, .item[data-active] .num { color: var(--md); }
 
 /* chrome */
-.sound { position: fixed; top: 24px; right: 28px; z-index: 2; font-size: 12px; letter-spacing: 0.12em; color: var(--lo); white-space: nowrap; }
-.sound:hover, .sound[aria-pressed="true"] { color: var(--fg); }
+/* top right: the voices, then the pixel speaker (waves when on, a cross when off) */
+.controls { position: fixed; top: 20px; right: 22px; z-index: 2; display: flex; align-items: center; gap: 14px; }
+.voices { display: flex; gap: 2px; font-size: 12px; letter-spacing: 0.12em; }
+.voices button { padding: 5px 8px; border: 1px solid transparent; color: var(--lo); }
+.voices button:hover { color: var(--fg); }
+.voices button[aria-pressed="true"] { color: var(--fg); border-color: var(--line); }
+.speaker { display: block; padding: 6px; color: var(--lo); }
+.speaker svg { display: block; }
+.speaker:hover, .speaker[aria-pressed="true"] { color: var(--fg); }
 .mark { position: fixed; right: 28px; bottom: 24px; z-index: 2; color: var(--fg); text-decoration: none; font-size: 13px; letter-spacing: 0.2em; }
 :focus-visible { outline: 1px solid var(--fg); outline-offset: 2px; }
 
@@ -51,7 +58,9 @@ section { height: 100dvh; scroll-snap-align: start; }
 
 @media (max-width: 640px) {
   .rail { --monochord-track-width: 40px; }
-  .sound { top: 16px; right: 16px; }
+  .controls { top: 10px; right: 8px; gap: 4px; }
+  .voices { font-size: 10px; letter-spacing: 0.08em; }
+  .voices button { padding: 4px 5px; }
   .mark { right: 16px; bottom: 16px; }
   .intro { padding: 64px 52px 48px; }
   .intro h1 { font-size: 30px; }
