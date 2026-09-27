@@ -1,7 +1,7 @@
 import { useLayoutEffect, useState, type RefObject } from "react";
 
-// A pencil arrow in the page background: out of the right of the title, one full loop, then to
-// the rail on the left: over the title on desktop, under everything on mobile. The route is a handful of waypoints placed from the
+// A pencil arrow in the page background: out of the right of the title, one full loop, then one
+// easy curve to the rail on the left, behind whatever content lies in the way. The route is a handful of waypoints placed from the
 // title's box, joined by one Catmull-Rom spline, so the curve stays smooth at any size and a
 // resize simply redraws it. The loop shrinks when there's little room right of the title.
 
@@ -52,34 +52,13 @@ export function PencilArrow({ from }: { from: RefObject<HTMLElement | null> }) {
         L(28, -18),
         L(50, -6),
       ];
-      let pts: Pt[];
-      if (w >= 640) {
-        // desktop: out of the loop and up, one arc over the title, down to the rail at title height
-        const top = Math.max(24, r.top - 96);
-        pts = [
-          ...loop,
-          L(92, -24),
-          [x0 + 70 * s, top + 28],
-          [(r.left + r.right) / 2, top],
-          // one long easing descent into the rail
-          [(r.left + tx) / 2, top + (cy - top) * 0.5],
-          [tx, cy + 6],
-        ];
-      } else {
-        // mobile: down the right side, then one level run under everything to the rail
-        const body = el.closest(".intro-body") ?? el;
-        const y = body.getBoundingClientRect().bottom + 36;
-        const edge = Math.min(w - 16, x0 + 96 * s);
-        pts = [
-          ...loop,
-          [edge, cy + 24],
-          [edge, y - 44],
-          // an even corner, then one straight run
-          [edge - 44, y],
-          [tx + 44, y],
-          [tx, y],
-        ];
-      }
+      // then one easy sag to the rail; it's background, so it simply passes behind the content
+      const pts: Pt[] = [
+        ...loop,
+        L(76, 12),
+        [(r.left + r.right) / 2, r.bottom + 34],
+        [tx, cy + 22],
+      ];
       const d = spline(pts);
       // arrowhead: two strokes back along the last stretch
       const [px, py] = pts[pts.length - 2], [ex, ey] = pts[pts.length - 1];

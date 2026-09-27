@@ -58,6 +58,8 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 /* the page: one centered screen; it scrolls only if the intro is taller than the viewport */
 .intro { position: fixed; inset: 0; overflow-y: auto; display: flex; padding: 72px 88px 64px; text-align: center; }
 .intro-body { max-width: 680px; min-width: 0; margin: auto; }
+/* a halo in the page colour, so the pencil line reads as passing under the words */
+.intro-body { text-shadow: 0 0 2px var(--bg), 0 0 6px var(--bg), 0 0 12px var(--bg); }
 /* links: the rail's lead-in bracket on hover */
 .links { display: flex; justify-content: center; gap: 36px; margin: 0; font-size: 12px; letter-spacing: 0.2em; }
 .links a { position: relative; color: var(--md); text-decoration: none; transition: color 0.2s; }
