@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Monochord, createBlip, tickEvent } from "../src";
 import { SOUNDS, type SoundPreset } from "./sounds";
 import { FONTS } from "./fonts";
+import { PencilArrow } from "./PencilArrow";
 
 const REPO = "https://github.com/tol-is/monochord";
 const NPM = "https://www.npmjs.com/package/monochord";
@@ -34,11 +35,15 @@ export function App() {
     [3, 2, 1, 0].forEach((i, k) => setTimeout(() => play(i, tickEvent(i, "scrub")), 30 + k * 90));
     setTimeout(() => play.dispose(), 2000);
   };
+  // the voices as a small horizontal monochord: a string, a numbered tick per voice, and the
+  // rail's long tick + diamond on the one playing
   const voices = (
-    <div className="voices" role="group" aria-label="Sound">
-      {SOUNDS.map((p) => (
-        <button key={p.id} aria-pressed={p.id === preset.id} onClick={() => choose(p)}>
-          {p.name.toUpperCase()}
+    <div className="voices" role="radiogroup" aria-label="Voice">
+      {SOUNDS.map((p, i) => (
+        <button key={p.id} role="radio" aria-checked={p.id === preset.id} className="voice" onClick={() => choose(p)}>
+          <span className="voice-num">{String(i + 1).padStart(2, "0")}</span>
+          <span className="voice-tick" aria-hidden="true" />
+          <span className="voice-name">{p.name.toUpperCase()}</span>
         </button>
       ))}
     </div>
@@ -63,6 +68,7 @@ export function App() {
 
 function Page({ audio, muted, preset, voices }: { audio: AudioContext | null; muted: boolean; preset: SoundPreset; voices: ReactNode }) {
   // nothing chosen until the rail is used
+  const title = useRef<HTMLHeadingElement>(null);
   const [value, setValue] = useState<string | undefined>(undefined);
   return (
     <>
@@ -79,13 +85,14 @@ function Page({ audio, muted, preset, voices }: { audio: AudioContext | null; mu
         ))}
       </Monochord.Root>
 
+      <PencilArrow from={title} />
       <main className="intro">
         <div className="intro-body">
-          <h1>MONOCHORD</h1>
+          <h1 ref={title}>MONOCHORD</h1>
           <p className="lede">A vertical index navigation.</p>
           {voices}
           <nav className="links" aria-label="Project">
-            <a href="/AGENTS.md">AGENTS ↗</a>
+            <a href="/AGENTS.md">AGENTS.MD ↗</a>
             <a href={REPO}>GITHUB ↗</a>
             <a href={NPM}>NPM ↗</a>
           </nav>

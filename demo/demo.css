@@ -22,31 +22,57 @@ button { font: inherit; letter-spacing: inherit; color: inherit; background: non
 .item[data-highlighted] .num, .item[data-active] .num { color: var(--md); }
 
 /* chrome */
-/* the voices, under the description */
-.voices { display: flex; justify-content: center; flex-wrap: wrap; gap: 2px; margin: 0 0 28px; font-size: 12px; letter-spacing: 0.12em; }
-.voices button { padding: 5px 8px; border: 1px solid transparent; color: var(--lo); }
-.voices button:hover { color: var(--fg); }
-.voices button[aria-pressed="true"] { color: var(--fg); border-color: var(--line); }
+/* the voices: a small horizontal monochord. The string runs through the ticks; the playing voice
+   gets the rail's long tick and diamond */
+.voices { position: relative; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 76px; margin: 4px 0 36px; }
+.voices::before { content: ""; position: absolute; left: 10px; right: 10px; top: 25px; height: 1px; background: var(--line); }
+.voice { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0; padding: 0 0 2px; color: var(--lo); }
+.voice-num { font-size: 10px; letter-spacing: 0.1em; height: 18px; line-height: 18px; color: var(--line); transition: color 0.2s; }
+.voice-tick { position: relative; width: 1px; height: 8px; margin: 7px 0 7px; background: currentColor; transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1), margin 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+.voice-name { font-size: 11px; letter-spacing: 0.2em; padding-left: 0.2em; transition: color 0.2s; }
+.voice:hover { color: var(--md); }
+.voice:hover .voice-tick { height: 12px; margin-bottom: 3px; }
+.voice[aria-checked="true"] { color: var(--fg); }
+.voice[aria-checked="true"] .voice-num { color: var(--md); }
+.voice[aria-checked="true"] .voice-tick { height: 15px; margin-bottom: 0; }
+.voice[aria-checked="true"] .voice-tick::after { content: ""; position: absolute; left: -3px; top: -3.5px; width: 7px; height: 7px; background: var(--fg); transform: rotate(45deg); }
+.voice:focus-visible { outline: none; }
+.voice:focus-visible .voice-name { outline: 1px solid var(--fg); outline-offset: 3px; }
 /* the pixel speaker, on its own bottom right */
 .speaker { position: fixed; right: 22px; bottom: 18px; z-index: 2; display: block; padding: 6px; color: var(--lo); }
 .speaker svg { display: block; }
 .speaker:hover, .speaker[aria-pressed="true"] { color: var(--fg); }
 :focus-visible { outline: 1px solid var(--fg); outline-offset: 2px; }
 
+/* the pencil arrow, behind the page; it draws itself in once */
+.pencil { position: fixed; inset: 0; pointer-events: none; }
+.pencil-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: pencil-draw 1.5s cubic-bezier(0.45, 0.05, 0.3, 1) 0.4s forwards; }
+.pencil-head { opacity: 0; animation: pencil-head 0.25s ease-out 1.85s forwards; }
+@keyframes pencil-draw { to { stroke-dashoffset: 0; } }
+@keyframes pencil-head { to { opacity: 0.9; } }
+@media (prefers-reduced-motion: reduce) {
+  .pencil-line { animation: none; stroke-dashoffset: 0; }
+  .pencil-head { animation: none; opacity: 0.9; }
+}
+
 /* the page: one centered screen; it scrolls only if the intro is taller than the viewport */
 .intro { position: fixed; inset: 0; overflow-y: auto; display: flex; padding: 72px 88px 64px; text-align: center; }
 .intro-body { max-width: 680px; min-width: 0; margin: auto; }
-.links { display: flex; justify-content: center; gap: 28px; margin: 0 0 28px; font-size: 13px; letter-spacing: 0.16em; }
-.links a { color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
-.links a:hover { border-color: var(--fg); }
-.intro h1 { color: var(--fg); font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: 0.24em; margin: 0 0 20px; padding-left: 0.24em; }
-.intro .lede { color: var(--md); font-size: 16px; margin: 0 0 24px; }
+/* links: the rail's lead-in bracket on hover */
+.links { display: flex; justify-content: center; gap: 36px; margin: 0; font-size: 12px; letter-spacing: 0.2em; }
+.links a { position: relative; color: var(--md); text-decoration: none; transition: color 0.2s; }
+.links a::before { content: "["; position: absolute; left: -14px; opacity: 0; transform: translateX(-4px); transition: opacity 0.2s, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+.links a:hover, .links a:focus-visible { color: var(--fg); }
+.links a:hover::before, .links a:focus-visible::before { opacity: 1; transform: none; }
+.intro h1 { color: var(--fg); font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: 0.24em; margin: 0 0 22px; padding-left: 0.24em; }
+.intro .lede { color: var(--md); font-size: 15px; letter-spacing: 0.04em; margin: 0 0 32px; }
 .intro p { margin: 0 0 16px; }
 
 @media (max-width: 640px) {
   .speaker { right: 10px; bottom: 10px; }
-  .voices { font-size: 10px; letter-spacing: 0.08em; }
-  .voices button { padding: 4px 5px; }
+  .voices { grid-auto-columns: 58px; }
+  .voice-name { font-size: 9px; letter-spacing: 0.14em; padding-left: 0.14em; }
+  .links { gap: 24px; font-size: 11px; }
 
   .intro { padding: 64px 52px 48px; }
   .intro h1 { font-size: 30px; letter-spacing: 0.18em; padding-left: 0.18em; }
