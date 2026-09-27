@@ -7,20 +7,6 @@ import { useLayoutEffect, useState, type RefObject } from "react";
 
 type Pt = [number, number];
 
-// uniform Catmull-Rom through the points, as cubic Béziers (ends padded by repetition): the desktop line
-const uniform = (pts: Pt[]) => {
-  const at = (i: number) => pts[Math.max(0, Math.min(pts.length - 1, i))];
-  const f = (n: number) => n.toFixed(1);
-  let d = `M ${f(pts[0][0])} ${f(pts[0][1])}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const [a, b, c, e] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
-    const c1: Pt = [b[0] + (c[0] - a[0]) / 6, b[1] + (c[1] - a[1]) / 6];
-    const c2: Pt = [c[0] - (e[0] - b[0]) / 6, c[1] - (e[1] - b[1]) / 6];
-    d += ` C ${f(c1[0])} ${f(c1[1])} ${f(c2[0])} ${f(c2[1])} ${f(c[0])} ${f(c[1])}`;
-  }
-  return d;
-};
-
 // centripetal Catmull-Rom through the points, as cubic Béziers: unlike the uniform kind it
 // doesn't overshoot where short steps meet long ones, so no hooks or cusps (ends padded by repetition)
 const spline = (pts: Pt[]) => {
@@ -73,13 +59,17 @@ export function PencilArrow({ from }: { from: RefObject<HTMLElement | null> }) {
           L(18, -42),
           L(28, -18),
           L(50, -6),
-          L(92, -24),
-          [x0 + 70 * s, top + 28],
+          // out of the loop, a round turn up the right side and over, still turning the same way
+          ...[60, 25, -10, -45, -80].map((deg): Pt => {
+            const t = (deg * Math.PI) / 180;
+            return L(60 + 42 * Math.cos(t), -40 + 42 * Math.sin(t));
+          }),
+          L(40, -90),
           [(r.left + r.right) / 2, top],
           [(r.left + tx) / 2, top + (cy - top) * 0.5],
           [tx, cy + 6],
         ];
-        d = uniform(pts);
+        d = spline(pts);
       } else {
       // mobile: one rotation throughout, clockwise: out to the right, a full loop, then a wide
       // U-turn that ends heading left behind the content, so the line never doubles back
