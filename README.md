@@ -7,7 +7,7 @@ taps, scrubs, value changes and scrolling set the ticks vibrating off a still li
 
 **[monochord-ui.vercel.app](https://monochord-ui.vercel.app)** · [AGENTS.md](AGENTS.md) for coding agents
 
-Composable parts built on [Base UI](https://base-ui.com)'s `useRender`, for React 19. Extracted from [Stormy Clouds](https://stormyclouds.com).
+Composable parts built on [Base UI](https://base-ui.com)'s `useRender`, for React 19.
 
 ## Install
 
