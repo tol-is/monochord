@@ -57,7 +57,9 @@ Rules that matter:
 | `Sound` | nothing | Optional note per tick. Omit for a silent rail. |
 
 Every rendering part takes Base UI's `render` prop to swap the element:
-`<Monochord.Item value="docs" render={<a href="/docs" />} />`.
+`<Monochord.Item value="docs" render={<a href="/docs" />} />`, or a function
+`render={(props, { active }) => <a {...props} href="/docs" />}`. An item can hold anything;
+`Label` is just a convenient `<span>`.
 
 ### `Root` props
 
@@ -71,7 +73,7 @@ Every rendering part takes Base UI's `render` prop to swap the element:
 | `spread` | fisheye width, in ticks | 5.5 |
 | `labelRoom` | px a label needs from its neighbours to open | label font size − 3 |
 | `trackWidth` | px width of the scrub strip at rest | 56 (40 under 400px wide) |
-| `handle` | `Ref<{ kick(velocity: number): void }>` | pluck from scroll: `kick(scrollDelta * 3)` |
+| `handle` | `Ref<MonochordHandle>` (`{ kick(velocity: number): void }`) | a light pluck at the current tick from scroll: `kick(scrollDelta * 3)`; rate-limited to every 120 ms |
 
 Scrubbing calls `onValueChange` on every tick crossed with `source: "scrub"`: navigate instantly
 for scrubs and animate for taps.
@@ -88,6 +90,7 @@ else is yours:
 - Items carry an inline button reset (font, padding, background, border), which beats classes for
   those properties. Style a child (`Label`) or use the `style` prop instead.
 - For readable labels over content, give the `Label` an opaque background.
+- Motion respects `prefers-reduced-motion`.
 
 ## Sound
 
@@ -97,21 +100,67 @@ const [ctx, setCtx] = useState<AudioContext | null>(null);
 <Monochord.Sound context={ctx} muted={!on} />
 ```
 
-Nothing plays while `context` is null. Default voice: every tick A4, decade ticks D3, a short
-sine with an octave under and a faint echo. Props (all optional): `pitch`, `voices`, `wave`,
-`attack`, `decay`, `volume`, `echo` (object or `false`), `destination`, `kinds`, `muted`.
+Nothing plays while `context` is null. The default is a pulse: every tick A4, decade ticks
+(0, 10, 20…) D3, as a soft, short sine with a quiet octave under it and a faint dark echo.
+All props are optional:
 
-Pitch presets: `pulse("A4", "D3")`, `scale("D3", "minor", { per: 10, direction: "down" })`,
-`note("C4")`, or `(index, event) => hz | null`. Modes: `major`, `minor`, `dorian`,
-`pentatonic`, `majorPentatonic`, `chromatic`, or an interval array.
+| Prop | Default | |
+| --- | --- | --- |
+| `context` | | `AudioContext \| null`; silent while null |
+| `pitch` | `pulse("A4", "D3")` | `(index, event) => Hz`; return `null` for silence |
+| `voices` | `[[1, 1], [0.5, 0.45]]` | `[multiple of the pitch, level]` per oscillator |
+| `wave` | `"sine"` | any `OscillatorType` |
+| `attack` / `decay` | `0.006` / `0.035` | seconds (decay is a time constant) |
+| `volume` | `0.06` | peak level at strength 1 |
+| `echo` | `{ time: 0.23, feedback: 0.25, wet: 0.15, cutoff: 1300 }` | partial objects merge with the default; `false` for a dry note |
+| `destination` | `context.destination` | route into your own mixer |
+| `kinds` | all | which ticks sound: `"hover"`, `"scrub"`, `"tap"`, `"keyboard"` |
+| `muted` | `false` | |
 
-Outside the part: `createBlip(ctx, options)` returns `play(index, event)` with `.set()` and `.dispose()`.
+Pitch presets:
+
+```ts
+import { pulse, scale, note, hz, MODES } from "monochord";
+
+pulse("A4", "D3")                                        // one note, decades marked by another
+scale("D3", "minor")                                     // each decade falls from high to D3, then repeats
+scale("A3", "pentatonic", { per: 15, direction: "up" })  // climbs; per = ticks per cycle (default 10)
+note("C4")                                               // every tick the same
+(i, e) => (e.kind === "tap" ? 880 : null)                // your own: sound only on taps
+hz("A4")                                                 // 440; takes a note name ("C#4", "Bb3") or Hz
+```
+
+Modes (`MODES`): `major`, `minor`, `dorian`, `pentatonic`, `majorPentatonic`, `chromatic`, or your
+own semitone interval array such as `[0, 2, 5, 7]`.
+
+Outside the part: `createBlip(ctx, options)` takes the same options and returns a
+`play(index, event?)` function with `.set(options)` and `.dispose()`, for `onTickCross` or code
+outside React.
+
+### Tick events
+
+`onTickCross(index, event)` fires for every tick crossed or chosen. `event.kind` says why
+(`"hover"`, `"scrub"`, `"tap"`, `"keyboard"`), `event.strength` is a loudness hint (hover 0.5,
+scrub 1, tap 1.4, keyboard 1.4; also exported as `tickStrength`), and `event.decade` is true for
+multiples of ten. Use it for your own sound, haptics (`navigator.vibrate`) or analytics.
+`tickEvent(index, kind)` builds one.
 
 ## Without React
 
-`createEngine(rootElement, { onSelect, onCross, ... })` is the framework-free core. Call
-`attach(canvas, strip)`, `setItems(elements)`, `setCurrent(index)`; it positions the elements
-and draws the canvas every frame. `destroy()` when done.
+`createEngine(rootElement, options)` is the framework-free core. Options are `reach`, `magnify`,
+`spread`, `labelRoom`, `trackWidth` (as on `Root`), plus `onSelect(index, source)` (required) and
+`onCross(index, kind)`. It positions the elements you give it and draws the canvas every frame.
+
+| Method | |
+| --- | --- |
+| `attach(canvas, strip)` | the canvas to draw on and the element that takes presses and scrubs |
+| `setItems(elements)` | item elements in display order |
+| `setCurrent(index)` | the current item |
+| `setKeyFocus(index)` | open the fisheye around an item for keyboard focus; `-1` releases it |
+| `setOptions(options)` | replace the options |
+| `kick(velocity)` | pluck from scroll, as `handle.kick` |
+| `pluck(index, amplitude, halfWidth)` | ring a span of string at a tick (px) |
+| `destroy()` | stop the loop and remove listeners |
 
 ## Common mistakes
 
